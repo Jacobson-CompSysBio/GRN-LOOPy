@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import os
-from mock import MagicMock, patch
+from mock import MagicMock, patch, mock_open, call
 
 
 from src.preprocessing_helpers import variance_helpers
@@ -17,6 +17,21 @@ data = {
 dataframe = pd.DataFrame(data= data)
 threshold = 0.1
 
+class TestNormalizeData: 
+	"""
+	This test class tests normalizing data within a dataframe.
+	"""
+
+	data = {
+		"a": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+		"b": [0, 10, 0, 10, 0, 10, 0, 10, 0, 10],
+		"c": [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
+		'd': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		'e': [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+	}
+	df = pd.DataFrame(data)
+
+	## TODO: write normalization tests. 
 
 class TestRemoveLowVariance:
 	"""
@@ -35,6 +50,25 @@ class TestRemoveLowVariance:
 		expected_output = dataframe[ expected_output_columns ]
 
 		actual_output = variance_helpers.remove_low_variance_features(dataframe, threshold)
+
+		pd.testing.assert_frame_equal(expected_output, actual_output)
+		
+	def test_remove_low_variance_features_savemeta(self, mocker): 
+		"""
+		This function tests 'remove_low_var' with ideal parameters.
+		"""
+	
+		expected_output_columns = ['a','c','d']
+		expected_output = dataframe[ expected_output_columns ]
+
+		open_mock = mocker.patch("builtins.open", new_callable=mock_open())
+
+		actual_output = variance_helpers.remove_low_variance_features(dataframe, threshold, True, 'path')
+
+
+		print(open_mock.call_args_list)
+
+		open_mock.assert_called_with('path/meta.txt', 'a')
 
 		pd.testing.assert_frame_equal(expected_output, actual_output)
 		
@@ -116,6 +150,8 @@ class TestRemoveLowVarAndSave:
 		input_network_path = "./test/test_data/test_input_networks/test_net_noidx.tsv"
 		input_df = pd.read_csv(input_network_path, sep='\t')
 		has_index_col = False
+		print_meta = True
+		meta_path = os.path.dirname(input_network_path)
 
 		# Returning the dataframe object not because of any logic but to ensure there
 		# is a separate df to assert against
@@ -135,6 +171,9 @@ class TestRemoveLowVarAndSave:
 		# rlv_mock.assert_called_once_with(input_df, threshold)
 		pd.testing.assert_frame_equal(input_df, rlv_mock.call_args[0][0])
 		assert(threshold == rlv_mock.call_args[0][1])
+		assert(print_meta == rlv_mock.call_args[0][2])
+		assert(meta_path == rlv_mock.call_args[0][3])
+
 
 		# write_to_file_mock.assert_called_once_with(dataframe, threshold, input_network_path)
 		pd.testing.assert_frame_equal(input_df, write_to_file_mock.call_args[0][0])
