@@ -13,15 +13,16 @@ def convert_df_to_network(df):
     return network
 
 def create_representative_set(network): 
-    random.seed(42)
     """
     This function takes a NX network object, takes a list of all connected components, 
     and then chooses the first element as a representative for that connected component.
     """
-    S = list(nx.connected_components(network))
+    random.seed(42)
+
+    connected_components = list(nx.connected_components(network))
     representatives = []
     element_map = {}
-    for subgraph in S:
+    for subgraph in connected_components:
         representative = list(subgraph)[0]
         representatives.append(representative)
 
@@ -58,9 +59,11 @@ def extract_representatives_and_save_to_files(df=None, df_filepath=None, origina
         raise Exception("No dataframe or filepath included") 
     
     df = df if df is not None else pd.read_csv(df_filepath, sep=delim)
+
     
     network = convert_df_to_network(df)
-    representatives, representative_map = create_representative_set(network) 
+    x = create_representative_set(network) 
+    representatives, representative_map = x
     all_nodes = network.nodes
     non_representatives = list(filter( lambda x: x not in representatives, all_nodes))
     
