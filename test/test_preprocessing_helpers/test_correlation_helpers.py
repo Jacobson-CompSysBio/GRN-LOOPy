@@ -5,7 +5,7 @@ import os
 from mock import mock_open
 
 
-from src.preprocessing_helpers import correlation_helpers
+from src.preprocessing import correlation_helpers
 
 base_data = {
 					"a": [0, 1, 1, 0],
@@ -138,15 +138,15 @@ class TestCreateCorrelationList:
 		save_corr = False
 
 		correlate_mock = mocker.patch(
-			"src.preprocessing_helpers.correlation_helpers.correlate_data",
+			"src.preprocessing.correlation_helpers.correlate_data",
 			return_value = correlation_df
 		)
 		extraction_mock = mocker.patch(
-			"src.preprocessing_helpers.correlation_helpers.extract_correlates_to_upper_right",
+			"src.preprocessing.correlation_helpers.extract_correlates_to_upper_right",
 			return_value = upper_right_corr_df
 		)
 		stack_mock  = mocker.patch(
-			"src.preprocessing_helpers.correlation_helpers.stack_data",
+			"src.preprocessing.correlation_helpers.stack_data",
 			return_value = stacked_corr_df
 		)
 		to_csv_mock = mocker.patch.object(stacked_corr_df, "to_csv")
@@ -189,15 +189,15 @@ class TestCreateCorrelationList:
 		save_corr = True
 
 		correlate_mock = mocker.patch(
-			"src.preprocessing_helpers.correlation_helpers.correlate_data",
+			"src.preprocessing.correlation_helpers.correlate_data",
 			return_value = correlation_df
 		)
 		extraction_mock = mocker.patch(
-			"src.preprocessing_helpers.correlation_helpers.extract_correlates_to_upper_right",
+			"src.preprocessing.correlation_helpers.extract_correlates_to_upper_right",
 			return_value = upper_right_corr_df
 		)
 		stack_mock  = mocker.patch(
-			"src.preprocessing_helpers.correlation_helpers.stack_data",
+			"src.preprocessing.correlation_helpers.stack_data",
 			return_value = stacked_corr_df
 		)
 		to_csv_mock = mocker.patch.object(stacked_corr_df, "to_csv")

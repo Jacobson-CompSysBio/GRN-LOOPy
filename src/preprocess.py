@@ -1,10 +1,10 @@
 import argparse
 
-from preprocessing_helpers.correlation_helpers import create_correlation_list
-from preprocessing_helpers.network_helpers import (
+from preprocessing.correlation_helpers import create_correlation_list
+from preprocessing.network_helpers import (
     extract_representatives_and_save_to_files,
     remove_representatives_from_main_dataset_and_save)
-from preprocessing_helpers.variance_helpers import remove_low_var_and_save
+from preprocessing.variance_helpers import remove_low_var_and_save
 
 def get_arguments():
     """

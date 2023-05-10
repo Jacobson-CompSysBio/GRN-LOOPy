@@ -5,7 +5,7 @@ import os
 from mock import MagicMock, patch, mock_open, call
 
 
-from src.preprocessing_helpers import variance_helpers
+from src.preprocessing import variance_helpers
 
 
 data = {
@@ -32,86 +32,6 @@ class TestNormalizeData:
 	df = pd.DataFrame(data)
 
 	## TODO: write normalization tests. 
-
-class TestRemoveOutliers: 
-	"""
-	This class tests the remove outliers function
-	"""
-	def test_removes_outliers_with_more_than_3sds(self): 
-		"""
-		This function returns true for outliers greater than 3 stds
-		"""
-		input_series = pd.Series([1, 2, 3, 1, 2, 3, 1, 2, 3, 6, 12, 36])
-		n_sds = 3
-
-		actual_output = variance_helpers.extract_outlier_samples(input_series, n_sds)
-
-		expected_output = pd.Series([False, False, False, False, False, False,
-									 False, False, False, False, False, True])
-
-		pd.testing.assert_series_equal(actual_output, expected_output)
-
-
-	def test_removes_nothing_when_no_outputliers(self): 
-		"""
-		This function removes no outliers because there are none! 
-		"""
-		input_series = pd.Series([1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3])
-		n_sds = 3
-
-		actual_output = variance_helpers.extract_outlier_samples(input_series, n_sds)
-
-		expected_output = pd.Series([False, False, False, False, False, False,
-									False, False, False, False, False, False])
-
-		pd.testing.assert_series_equal(actual_output, expected_output)
-
-class TestRemoveOutliers:
-	"""
-	this class removes outliers for each column of a dataframe. 
-	"""
-	def test_removes_outliers_in_dataframe(self, mocker):
-		"""
-		This function tests whether the input df will properly find the 
-		rows with outliers. 
-		"""
-		input_df = pd.DataFrame({
-			'a': [1,2,1,2,1,2,1,2,1,40],
-			'b': [40,1,2,1,2,1,2,1,2,1]
-		})
-		n_stds = 3
-
-		mocker.patch(
-			"src.preprocessing_helpers.variance_helpers.extract_outlier_samples",
-			side_effect = [
-				pd.Series([
-			 		False, False, False, False, False, False, False, False, False, True,
-				]),
-				pd.Series([
-					True, False, False, False, False, False, False, False, False, False,
-				])
-			]
-		)
-		
-		actual_output = variance_helpers.create_outlier_sample_rows(input_df, n_stds)
-		print("WHAT")
-		print(type(actual_output))
-		print(actual_output)
-		expected_output = pd.Series([
-			True,
-			False,
-			False,
-			False,
-			False,
-			False,
-			False,
-			False,
-			False,
-			True,
-		])
-
-		pd.testing.assert_series_equal(actual_output, expected_output)
-		
 
 class TestRemoveLowVariance:
 	"""
@@ -236,12 +156,12 @@ class TestRemoveLowVarAndSave:
 		# Returning the dataframe object not because of any logic but to ensure there
 		# is a separate df to assert against
 		rlv_mock = mocker.patch(
-			"src.preprocessing_helpers.variance_helpers.remove_low_variance_features",
+			"src.preprocessing.variance_helpers.remove_low_variance_features",
 			return_value = input_df
 		)
 
 		write_to_file_mock = mocker.patch(
-			"src.preprocessing_helpers.variance_helpers.write_high_var_to_file",
+			"src.preprocessing.variance_helpers.write_high_var_to_file",
 			return_value = "dataframe"
 		)
 
@@ -273,11 +193,11 @@ class TestRemoveLowVarAndSave:
 		# Returning the dataframe object not because of any logic but to ensure there
 		# is a separate df to assert against
 		rlv_mock = mocker.patch(
-			"src.preprocessing_helpers.variance_helpers.remove_low_variance_features",
+			"src.preprocessing.variance_helpers.remove_low_variance_features",
 			return_value = input_df
 		)
 		write_to_file_mock = mocker.patch(
-			"src.preprocessing_helpers.variance_helpers.write_high_var_to_file",
+			"src.preprocessing.variance_helpers.write_high_var_to_file",
 			return_value = "dataframe"
 		)
 
@@ -307,11 +227,11 @@ class TestRemoveLowVarAndSave:
 		# Returning the dataframe object not because of any logic but to ensure there
 		# is a separate df to assert against
 		rlv_mock = mocker.patch(
-			"src.preprocessing_helpers.variance_helpers.remove_low_variance_features",
+			"src.preprocessing.variance_helpers.remove_low_variance_features",
 			return_value = input_df
 		)
 		write_to_file_mock = mocker.patch(
-			"src.preprocessing_helpers.variance_helpers.write_high_var_to_file",
+			"src.preprocessing.variance_helpers.write_high_var_to_file",
 			return_value = "dataframe"
 		)
 

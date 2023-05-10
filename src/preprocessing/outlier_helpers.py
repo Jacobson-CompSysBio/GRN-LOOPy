@@ -1,4 +1,12 @@
+"""
+This Module contains helpers for finding and removing
+outlier samples.
+"""
 
+import os
+import pandas as pd
+import numpy as np
+from scipy import stats
 
 def extract_outlier_samples(series: pd.Series, n_stds: int) -> pd.Series: 
     """

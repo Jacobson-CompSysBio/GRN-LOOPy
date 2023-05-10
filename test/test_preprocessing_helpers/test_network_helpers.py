@@ -6,7 +6,7 @@ import os
 from mock import mock_open
 
 
-from src.preprocessing_helpers import network_helpers
+from src.preprocessing import network_helpers
 
 class TestConvertDFToNetwork: 
 	"""
@@ -203,15 +203,15 @@ class TestEXtractRepresentativesAndSaveToFile:
 			return_value = input_df
 		)
 		convert_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.convert_df_to_network',
+			'src.preprocessing.network_helpers.convert_df_to_network',
 			return_value = self.as_graph
 		)
 		create_representative_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.create_representative_set',
+			'src.preprocessing.network_helpers.create_representative_set',
 			return_value = (self.representatives, self.rep_map)
 		)
 		write_representative_map_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.write_representative_map_to_file',
+			'src.preprocessing.network_helpers.write_representative_map_to_file',
 		)
 		
 		actual_output = network_helpers.extract_representatives_and_save_to_files(df_filepath = input_df_file)
@@ -233,15 +233,15 @@ class TestEXtractRepresentativesAndSaveToFile:
 		input_df = self.as_df
 
 		convert_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.convert_df_to_network',
+			'src.preprocessing.network_helpers.convert_df_to_network',
 			return_value = self.as_graph
 		)
 		create_representative_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.create_representative_set',
+			'src.preprocessing.network_helpers.create_representative_set',
 			return_value = (self.representatives, self.rep_map)
 		)
 		write_representative_map_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.write_representative_map_to_file',
+			'src.preprocessing.network_helpers.write_representative_map_to_file',
 		)
 		
 		actual_output = network_helpers.extract_representatives_and_save_to_files(df = self.as_df)
@@ -263,15 +263,15 @@ class TestEXtractRepresentativesAndSaveToFile:
 		original_data_file = "original.tsv"
 
 		convert_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.convert_df_to_network',
+			'src.preprocessing.network_helpers.convert_df_to_network',
 			return_value = self.as_graph
 		)
 		create_representative_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.create_representative_set',
+			'src.preprocessing.network_helpers.create_representative_set',
 			return_value = (self.representatives, self.rep_map)
 		)
 		write_representative_map_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.write_representative_map_to_file',
+			'src.preprocessing.network_helpers.write_representative_map_to_file',
 		)
 		
 		actual_output = network_helpers.extract_representatives_and_save_to_files(df = self.as_df, original_data_file=original_data_file)
@@ -294,15 +294,15 @@ class TestEXtractRepresentativesAndSaveToFile:
 		outfile_name = "outfile.tsv"
 
 		convert_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.convert_df_to_network',
+			'src.preprocessing.network_helpers.convert_df_to_network',
 			return_value = self.as_graph
 		)
 		create_representative_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.create_representative_set',
+			'src.preprocessing.network_helpers.create_representative_set',
 			return_value = (self.representatives, self.rep_map)
 		)
 		write_representative_map_mock = mocker.patch(
-			'src.preprocessing_helpers.network_helpers.write_representative_map_to_file',
+			'src.preprocessing.network_helpers.write_representative_map_to_file',
 		)
 		
 		actual_output = network_helpers.extract_representatives_and_save_to_files(df = self.as_df, outfile_name=outfile_name)
