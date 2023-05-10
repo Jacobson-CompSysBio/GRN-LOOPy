@@ -9,7 +9,6 @@ import numpy as np
 from scipy import stats
 
 
-
 def normalize_data(raw_df: pd.DataFrame) -> pd.DataFrame:
     """
     This function normalizes data from 0 to 1
@@ -18,41 +17,6 @@ def normalize_data(raw_df: pd.DataFrame) -> pd.DataFrame:
 
     raw_df = raw_df.fillna(0)
     return raw_df
-
-
-def extract_outlier_samples(series: pd.Series, n_stds: int) -> pd.Series: 
-    """
-    This function returns true if the values within excede n standard deviations
-    from the mean
-    """
-    zscore = stats.zscore(series)
-    z = np.abs(zscore)
-
-    return z > n_stds
-
-def create_outlier_sample_rows(raw_df: pd.DataFrame, n_stds: int) -> pd.DataFrame: 
-    """
-    Create outliers row series
-    """
-
-    outlier_df = pd.DataFrame()
-    for column in raw_df.columns:
-        outlier_series = extract_outlier_samples(raw_df[column])
-
-        outlier_df[column] = outlier_series
-
-    outlier_series = outlier_df.apply(lambda x: any(x), axis=1)
-
-    return outlier_series 
-
-
-def remove_outliers(raw_df, n_sds):
-    """
-    This function removes outliers above or below the nth percentile
-    """
-    print("hi")
-    
-
 
 def remove_low_variance_features(raw_df: pd.DataFrame, variance_thresh: float, print_meta: bool = False, path:str ='./') -> pd.DataFrame:
     """
@@ -71,8 +35,8 @@ def remove_low_variance_features(raw_df: pd.DataFrame, variance_thresh: float, p
     if print_meta:
         low_var_cols = raw_df.columns[ ~threshold_mask ]
         with open(f'{path}/meta.txt', 'a') as f:
-            f.write('num_low_var_removed_cols\t', len(low_var_cols))
-            f.write("low_var_removed_cols\t", low_var_cols)
+            f.write(f'num_low_var_removed_cols\t{len(low_var_cols)}\n')
+            f.write(f"low_var_removed_cols\t{low_var_cols}\n\n")
 
     return low_variance_dataframe
 
