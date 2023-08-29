@@ -1,4 +1,5 @@
 import networkx as nx
+import igraph
 import numpy as np 
 import pandas as pd
 import pytest
@@ -315,3 +316,97 @@ class TestEXtractRepresentativesAndSaveToFile:
 		create_representative_mock.assert_called_once_with(self.as_graph)
 
 		write_representative_map_mock.assert_called_once_with(self.rep_map, expected_file_name)
+
+
+# class TestConvertDirectedToUndirected: 
+# 	"""
+# 	This class tests the function `convert_directed_to_undirected`
+
+		
+# 		to	from	weight	       E──┐
+# 		e	b		1   	          ▼
+# 		d	b		1     	   D─────►B◄──►C◄──►F
+# 		c	b		0.7  	          │    ▲
+# 		b	a		1     	          ▼    │
+# 		b	c		0.5   	          A◄───┘
+# 		c	a		0.25
+# 		a	c		0.9
+# 		c	f		0.3
+# 		f	c		0.8
+	
+#    		   a    b    c     d  e  f            a    b    c     d  e  f   
+# 		a  0    1    0.25  0  0  0         a  0    1    0.9   0  0  0   
+# 		b  0    0    0.7   1  1  0         b  1    0    0.7   1  1  0   
+# 		c  0.9  0.5  0     0  0  0.8 ==>   c  0.9  0.7  0     0  0  0.8 
+# 		d  0    0    0     0  0  0         d  0    1    0     0  0  0   
+# 		e  0    0    0     0  0  0         e  0    1    0     0  0  0   
+# 		f  0    0    0.3   0  0  0         f  0    0    0.8   0  0  0   
+# 	"""
+
+# 	def test_converts_directed_to_undirected(self): 
+# 		"""
+# 		This tests converting a network
+# 		and maintains the highest edge weight
+# 		"""
+
+
+# 		adj_array =  igraph.Matrix([
+# 			[ 0,      0, 0.9, 0, 0, 0  ], 
+# 			[ 1,      0, 0.5, 0, 0, 0  ],
+# 			[ 0.25, 0.7,   0, 0, 0, 0.3],
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 		])
+
+# 		g1 = igraph.Graph.Weighted_Adjacency(adj_array)
+# 		print("INPUT VALUE ", g1)
+# 		actual_output = network_helpers.convert_directed_to_undirected(g1)
+# 		print("ACTUAL OUTPUT: ", actual_output)
+# 		expected_adj_array =  igraph.Matrix([
+# 			[ 0,      1, 0.9, 0, 0, 0  ], 
+# 			[ 1,      0, 0.7, 1, 1, 0  ],
+# 			[ 0.9 , 0.7,   0, 0, 0, 0.8],
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 		])
+
+# 		actual_weighted_adj = actual_output.get_adjacency(attribute='weight')
+
+# 		assert(actual_weighted_adj, expected_adj_array)
+
+# 	def test_converts_directed_to_undirected_with_names(self): 
+# 		"""
+# 		This tests converting a network
+# 		and maintains the highest edge weight
+# 		"""
+
+
+# 		adj_array =  igraph.Matrix([
+# 			[ 0,      0, 0.9, 0, 0, 0  ], 
+# 			[ 1,      0, 0.5, 0, 0, 0  ],
+# 			[ 0.25, 0.7,   0, 0, 0, 0.3],
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 		])
+
+# 		g1 = igraph.Graph.Weighted_Adjacency(adj_array)
+# 		print("INPUT VALUE ", g1)
+# 		actual_output = network_helpers.convert_directed_to_undirected(g1)
+# 		print("ACTUAL OUTPUT: ", actual_output)
+# 		expected_adj_array =  igraph.Matrix([
+# 			[ 0,      1, 0.9, 0, 0, 0  ], 
+# 			[ 1,      0, 0.7, 1, 1, 0  ],
+# 			[ 0.9 , 0.7,   0, 0, 0, 0.8],
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      1,   0, 0, 0, 0  ], 
+# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 		])
+
+# 		actual_weighted_adj = actual_output.get_adjacency(attribute='weight')
+
+# 		assert(actual_weighted_adj, expected_adj_array)
+
+

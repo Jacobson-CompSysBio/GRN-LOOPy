@@ -57,7 +57,7 @@ def main():
         save_corr: {save_corr}
         verbose: {verbose}
         """)
-    
+
     if verbose: 
         print("Removing Low Variance Values")
     
@@ -76,11 +76,15 @@ def main():
         if verbose: 
             print("Extracting Representatives.") 
 
-        representatives, non_representatives = extract_representatives_and_save_to_files(df = stacked_corr_data, original_data_file = input_file) 
+        representatives, non_representatives = extract_representatives_and_save_to_files(
+            df = stacked_corr_data,
+            original_data_file = input_file
+        ) 
 
         if verbose: 
             print("Saving Dataset with Nonrepresentatives Removed")
 
+        # TODO: Change the name! we're removing nonreps
         remove_representatives_from_main_dataset_and_save(input_file, non_representatives) 
 if __name__ == "__main__":
     main()

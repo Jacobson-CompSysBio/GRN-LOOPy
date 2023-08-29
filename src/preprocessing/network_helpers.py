@@ -1,5 +1,6 @@
 import pandas as pd
 import networkx as nx
+import igraph
 import random
 
 ### NETWORK Functions: 
@@ -93,3 +94,43 @@ def remove_representatives_from_main_dataset_and_save(raw_data_file, non_represe
     outfile_name = f"{base_name}_no_correlated_data.tsv"
 
     filtered_df.to_csv(outfile_name, sep='\t', index=False)
+
+
+def generate_igraph_graph_from_weighted_edgelist(edge_df: pd.DataFrame): 
+	## one: create index map for edge df 
+	
+	g = igraph.Graph.DataFrame(
+		edge_df, 
+		directed=True, 
+		vertices=pd.DataFrame({'name':['a','b','c','d','e','f']}))
+
+
+def get_weighted_edgelist_with_names(g: igraph.Graph): 
+	"""
+	This function takes an igraph graph
+	and returns a weighted edgelist as a pandas 
+	dataframe. 
+	"""
+	df = g.get_edge_dataframe()
+	df_vert = g.get_vertex_dataframe()
+	df['source'].replace(df_vert['name'], inplace=True)
+	df['target'].replace(df_vert['name'], inplace=True)
+	df_vert.set_index('name', inplace=True)
+
+def convert_directed_to_undirected(g: igraph.Graph, collapse_method=max): 
+	"""
+	This method converts a directed weighted network to an undirected 
+	weighted network. Depending on the method chosen, those weights
+	will be taken.
+	"""
+
+	if type(g) == nx.Graph:
+		# convert the graph
+		g = igraph.Graph.from_networkx(g)
+	print("posti f ", g)
+	g = g.as_undirected(
+			mode='collapse',
+			combine_edges=collapse_method
+		)
+	print("FININSHED ", g)
+	return g
