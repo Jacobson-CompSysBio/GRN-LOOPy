@@ -59,7 +59,7 @@ def main():
         """)
 
     if verbose: 
-        print("Removing Low Variance Values")
+        print("Removing NO Variance Values")
     
 
     if remove_low_variance:
