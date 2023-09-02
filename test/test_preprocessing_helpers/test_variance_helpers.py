@@ -139,7 +139,6 @@ class TestRemoveLowVarAndSave:
 	and saves the data to a new file by calling `
 		- remove_low_variance_features
 		- write_high_var_to_file
-	
 	"""
 
 	def test_remove_low_var_and_save_no_index_tsv(self, mocker): 

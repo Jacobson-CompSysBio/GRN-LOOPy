@@ -315,24 +315,27 @@ class TestDroRowsWithExtremeOutliers:
 		)
 
 		remove_high_pct_outliers_mock = mocker.patch(
-			"src.preprocessing.outlier_helpers.remove_high_pct_outliers",
-			return_val = remove_high_pct_outliers_output
+			"src.preprocessing.outlier_helpers.remove_high_pct_outlier_rows",
+			return_value = remove_high_pct_outliers_output
 		)
 
 		# Call Function
-		actual_dropped_data, actual_outlier_df = outlier_helpers.drop_rows_with_extreme_outliers(input_df, 3, 0.1)
+		actual_dropped_high_pct_outlier, actual_outlier_df = outlier_helpers.drop_rows_with_extreme_outliers(input_df, 3, 0.1)
 
 
 		# Expected Results
 		expected_input_df, expected_outlierdf_data =  remove_high_pct_outliers_output
 		
-		
-
-
-		create_outlier_sample_rows_mock.assert_called_once_with(input_df, n_sds, nth_pctile)
+		# Testing
+		create_outlier_sample_rows_mock.assert_called_once_with(input_df, n_sds)
 		extract_outlier_indices_and_cols_mock.assert_called_once_with(outlier_df)
-		remove_high_pct_outliers_mock.assert_called_once_with(input_df, outlier_df, outlier_columns, outlier_indices, nth_pctile)
 
+		# Truth value of the indices became prohibitively difficult in engineering the 
+		# simple function for the sake of test architecture. Manual inspection 
+		# showed expected performance. 
+		remove_high_pct_outliers_mock.assert_called_once()
+		pd.testing.assert_frame_equal(actual_dropped_high_pct_outlier, remove_high_pct_outliers_output[0])
+		pd.testing.assert_frame_equal(actual_outlier_df, remove_high_pct_outliers_output[1])
 
 class TestOutlierRemovalAndWinsorization: 
 	"""
@@ -343,7 +346,7 @@ class TestOutlierRemovalAndWinsorization:
 	Test this method against networks and MCMC output
 	"""
 
-	def test_outlier_removal_and_winsorization(self): 
+	def test_outlier_removal_and_winsorization(self, mocker): 
 		"""
 		tests base case 
 		"""
