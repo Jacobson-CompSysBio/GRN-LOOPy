@@ -60,7 +60,7 @@ def remove_high_pct_outlier_rows(raw_df, outlier_df, outlier_columns, outlier_in
         
     df_dropped_high_pct_outlier = raw_df.drop(high_outlier_indices)
     outlier_df_dropped_high_pct = outlier_df.drop(high_outlier_indices)
-    
+
     return df_dropped_high_pct_outlier, outlier_df_dropped_high_pct
 
 
@@ -72,7 +72,7 @@ def drop_rows_with_extreme_outliers(raw_df, n_sds, nth_percentile_for_drop):
     rows_with_outliers, outlier_df = create_outlier_sample_rows(raw_df, n_sds)
     outlier_indices, outlier_columns = extract_outlier_indices_and_cols(outlier_df)
 
-    df_dropped_high_pct_outlier, outlier_df = remove_high_pct_outliers(raw_df, outlier_df, outlier_columns, outlier_indices, nth_percentile_for_drop)
+    df_dropped_high_pct_outlier, outlier_df = remove_high_pct_outlier_rows(raw_df, outlier_df, np.array(outlier_columns.values), np.array(outlier_indices.values), nth_percentile_for_drop)
 
     return df_dropped_high_pct_outlier, outlier_df
 
