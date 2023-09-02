@@ -95,6 +95,8 @@ def remove_representatives_from_main_dataset_and_save(raw_data_file, non_represe
 
     filtered_df.to_csv(outfile_name, sep='\t', index=False)
 
+    return filtered_df
+
 
 def generate_igraph_graph_from_weighted_edgelist(edge_df: pd.DataFrame): 
 	## one: create index map for edge df 
