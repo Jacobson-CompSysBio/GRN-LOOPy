@@ -7,10 +7,11 @@ def create_model(
 	n_estimators = 100, # set large and fine tune with early stopping on validation
 	num_leaves = 31, # max number of leaves in one tree
 	max_depth = -1, # constrain max tree depth to prevent overfitting, 
-	verbose= 1, # -1 = silent, 0 = warn, 1 = info
 	random_state= 42,
 	device = "cpu",
-	gpu_device_id = -1):
+	gpu_device_id = -1,
+	verbose= 1 # -1 = silent, 0 = warn, 1 = info
+	):
 	"""
 	TODO: specifically for lgbm, but this function ought to return any type of 
 	tree based model that we can run embarassingly to get feature importances
