@@ -25,24 +25,24 @@ def get_arguments():
 						help='uses mpi scheduler to run data')
 	parser.add_argument('--outfile', dest='outfile', action='store', default='preprocessed.tsv',
 						help='the base name for the output files. Default is preprocessed.tsv')
-	parser.add_arguments("--boosting_type", dest="boosting_type", default  = 'gbdt', 
+	parser.add_argument("--boosting_type", dest="boosting_type", default  = 'gbdt', 
 						help="gbdt is commong gradient boosted tree. gbdt, rf, dart")
-	parser.add_arguments("--objective", dest="objective", default  = 'regression',
+	parser.add_argument("--objective", dest="objective", default  = 'regression',
 						help="Objective for model: 'regression', 'mape', etc.")						
-	parser.add_arguments("--learning_rate", dest="learning_rate", default  = 0.1, 
+	parser.add_argument("--learning_rate", dest="learning_rate", default  = 0.1, 
 						help="Boosting learning rate")						
-	parser.add_arguments("--n_estimators", dest="n_estimators", default  = 100,
+	parser.add_argument("--n_estimators", dest="n_estimators", default  = 100,
 						help="The total number of leaves allowed in each tree. Recommended set large and fine tune with early stopping on validation")						
-	parser.add_arguments("--num_leaves", dest="num_leaves", default  = 31,
+	parser.add_argument("--num_leaves", dest="num_leaves", default  = 31,
 						help="max number of leaves in one tree")						
-	parser.add_arguments("--max_depth", dest="max_depth", default  = -1, 
+	parser.add_argument("--max_depth", dest="max_depth", default  = -1, 
 						help="The allowed max depth of the trees. Default is infinite, but suggested to constrain max tree depth to prevent overfitting") # , ")						
-	parser.add_arguments("--random_state", dest="random_state", default = 42)						
-	parser.add_arguments("--device", dest="device", default  = "cpu")						
-	parser.add_arguments("--gpu_device_id", dest="gpu_device_id", default  = -1)						
+	parser.add_argument("--random_state", dest="random_state", default = 42)						
+	parser.add_argument("--device", dest="device", default  = "cpu")						
+	parser.add_argument("--gpu_device_id", dest="gpu_device_id", default  = -1)						
 	parserr.add_argument('--verbose', dest='verbose', action='store_true',
 						help='prints verbosely')
-	# parser.add_arguments("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
+	# parser.add_argument("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
 
 	return parser.parse_args()
 
