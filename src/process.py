@@ -66,9 +66,9 @@ def run_mpi_model(feature_name):
 	y_test = test_df[y_col]
 
 
-    rank = MPI.COMM_WORLD.Get_rank()
-    node_id = os.environ['SLURM_NODEID']
-    gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
+	rank = MPI.COMM_WORLD.Get_rank()
+	node_id = os.environ['SLURM_NODEID']
+	gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
 
 
 	model = create_model(
@@ -84,7 +84,7 @@ def run_mpi_model(feature_name):
 		verbose= verbose # -1 = silent, 0 = warn, 1 = info
 	)
 
-	
+
 
 
 
