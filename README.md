@@ -35,5 +35,23 @@ Depending uppon how the data are preprocessed and post processed, there remains 
 	- Accuracy * Feature Importance Network Edge Weighting
 
 ## Implementation
+Download the repository locally. 
+
+```bash
+module load rocm
+module load boost
+module load ums/default
+module load ums002/default
+module load cray-mpich/8.1.23
+
+source activate /ccs/home/lanemj/environments/frontier/lightgbm
+
+(/ccs/home/lanemj/environments/frontier/lightgbm) lanemj@frontier08832:~/tools/hp> MPI4PY_RC_RECV_MPROBE=0 \
+          srun -n 17  python /ccs/home/lanemj/hp_network_generator/src/process.py\
+           --infile /ccs/home/lanemj/DREAM5_SysGenA100_Network1_Expression_100.tsv \
+           --device gpu \
+           --header_row_idx 0 2> err 1> out
+```
+
 
  
