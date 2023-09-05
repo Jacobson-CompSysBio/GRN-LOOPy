@@ -37,9 +37,7 @@ def get_arguments():
 						help="max number of leaves in one tree")						
 	parser.add_argument("--max_depth", dest="max_depth", default  = -1, 
 						help="The allowed max depth of the trees. Default is infinite, but suggested to constrain max tree depth to prevent overfitting") # , ")						
-	parser.add_argument("--random_state", dest="random_state", default = 42)						
-	parser.add_argument("--device", dest="device", default  = "cpu")						
-	parser.add_argument("--gpu_device_id", dest="gpu_device_id", default  = -1)						
+	parser.add_argument("--random_state", dest="random_state", default = 42)
 	parserr.add_argument('--verbose', dest='verbose', action='store_true',
 						help='prints verbosely')
 	# parser.add_argument("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
@@ -58,7 +56,6 @@ max_depth = None # -1, # constrain max tree depth to prevent overfitting,
 verbose= None # 1, # -1 = silent, 0 = warn, 1 = info
 random_state= None # 42,
 device = None # "cpu",
-gpu_device_id = None # -1
 
 def run_mpi_model(feature_name):
 	x_cols = train_df.columns[train_df.columns != feature_name]
@@ -67,6 +64,13 @@ def run_mpi_model(feature_name):
 	x_test = test_df[x_cols]
 	y_train = train_df[y_col]
 	y_test = test_df[y_col]
+
+
+    rank = MPI.COMM_WORLD.Get_rank()
+    node_id = os.environ['SLURM_NODEID']
+    gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
+
+
 	model = create_model(
 		boosting_type = boosting_type, # 'gbdt'
 		objective = objective, # 'regression', 'mape'
@@ -74,11 +78,13 @@ def run_mpi_model(feature_name):
 		n_estimators = n_estimators, # set large and fine tune with early stopping on validation
 		num_leaves = num_leaves, # max number of leaves in one tree
 		max_depth = max_depth, # constrain max tree depth to prevent overfitting, 
-		verbose= verbose, # -1 = silent, 0 = warn, 1 = info
 		random_state= 42,
 		device = device,
-		gpu_device_id = gpu_device_id
+		gpu_device_id = gpu_device_id, 
+		verbose= verbose # -1 = silent, 0 = warn, 1 = info
 	)
+
+	
 
 
 
@@ -99,7 +105,6 @@ def main():
 	verbose = self.verbose
 	random_state = self.random_state
 	device = self.device
-	gpu_device_id = self.gpu_device_id
 
 
 	features = df.columns
