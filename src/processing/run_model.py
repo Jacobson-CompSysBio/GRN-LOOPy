@@ -6,7 +6,7 @@ from mpi4py.futures import MPICommExecutor
 from processing import create_model
 
 
-def run_model(model, train, test, x_cols, y_col, eval_set=False, gpus_per_device=8):
+def run_model(model, train, test, x_cols, y_col, eval_set=False, device='cpu', gpus_per_device=8):
     x_train = train[x_cols]
     y_train = train[y_col]
     x_test = test[x_cols]
