@@ -5,10 +5,8 @@ import os
 import sys
 import random
 import time
-from utils.file_helpers import read_csv
+from utils.file_helpers import read_dataframe
 from processing.data_helpers import get_train_test_split
-
-
 
 def get_arguments():
 	"""
@@ -61,10 +59,8 @@ device = None # "cpu",
 gpu_device_id = None # -1
 
 def run_mpi_model(feature_name):
-	
 	x_cols = train_df.columns[train_df.columns != feature_name]
 	y_col = feature_name
-
 	x_train = train_df[x_cols]
 	x_test = test_df[x_cols]
 	y_train = train_df[y_col]
@@ -89,7 +85,7 @@ def main():
 	args = get_arguments()
 
 	df_filepath = args.infile
-	df = read_csv(df_filepath)
+	df = read_dataframe(df_filepath)
 
 	device = self.device
 	boosting_type = self.boosting_type
