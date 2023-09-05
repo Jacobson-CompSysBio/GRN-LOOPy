@@ -3,7 +3,7 @@ import random
 import time
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
-from src.processing import create_model
+from processing import create_model
 
 
 def run_model(model, train, test, x_cols, y_col, eval_set=False, gpus_per_device=8):
