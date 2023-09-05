@@ -46,11 +46,11 @@ module load cray-mpich/8.1.23
 
 source activate /ccs/home/lanemj/environments/frontier/lightgbm
 
-(/ccs/home/lanemj/environments/frontier/lightgbm) lanemj@frontier08832:~/tools/hp> MPI4PY_RC_RECV_MPROBE=0 \
-          srun -n 17  python /ccs/home/lanemj/hp_network_generator/src/process.py\
-           --infile /ccs/home/lanemj/DREAM5_SysGenA100_Network1_Expression_100.tsv \
-           --device gpu \
-           --header_row_idx 0 2> err 1> out
+MPI4PY_RC_RECV_MPROBE=0 srun -n 17  python /ccs/home/lanemj/hp_network_generator/src/process.py\
+	--infile /ccs/home/lanemj/DREAM5_SysGenA100_Network1_Expression_100.tsv \
+	--device gpu \
+	--header_row_idx 0 \
+	2> err 1> out
 ```
 
 
