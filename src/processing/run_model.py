@@ -3,10 +3,10 @@ import random
 import time
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
-from processing import create_model
 
 
 def run_model(model, train, test, x_cols, y_col, eval_set=False, device='cpu', gpus_per_device=8):
+    print("splitting data", flush=True)
     x_train = train[x_cols]
     y_train = train[y_col]
     x_test = test[x_cols]
@@ -16,6 +16,7 @@ def run_model(model, train, test, x_cols, y_col, eval_set=False, device='cpu', g
     node_id = os.environ['SLURM_NODEID']
     gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
 
+    print("Starting", flush=True)
     start = time.time()
     if eval_set:
         model.fit(x_train, y_train, eval_set=(x_test, y_test))
