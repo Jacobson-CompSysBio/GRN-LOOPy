@@ -5,8 +5,8 @@ import os
 import sys
 import random
 import time
-from src.utils.file_helpers import read_csv
-from src.utils.data_helpers import get_train_test_split
+from utils.file_helpers import read_csv
+from processing.data_helpers import get_train_test_split
 
 
 
