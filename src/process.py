@@ -95,16 +95,16 @@ def main():
 	df_filepath = args.infile
 	df = read_dataframe(df_filepath)
 
-	device = self.device
-	boosting_type = self.boosting_type
-	objective = self.objective
-	learning_rate = self.learning_rate
-	n_estimators = self.n_estimators
-	num_leaves = self.num_leaves
-	max_depth = self.max_depth
-	verbose = self.verbose
-	random_state = self.random_state
-	device = self.device
+	device = args.device
+	boosting_type = args.boosting_type
+	objective = args.objective
+	learning_rate = args.learning_rate
+	n_estimators = args.n_estimators
+	num_leaves = args.num_leaves
+	max_depth = args.max_depth
+	random_state = args.random_state
+	device = args.device
+	verbose = args.verbose
 
 
 	features = df.columns
