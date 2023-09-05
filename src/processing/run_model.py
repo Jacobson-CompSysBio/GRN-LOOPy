@@ -16,7 +16,11 @@ def run_model(model, train, test, x_cols, y_col, eval_set=False, device='cpu', g
     node_id = os.environ['SLURM_NODEID']
     gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
 
-    print("Starting", flush=True)
+    print("Starting", 
+    "\trank:", rank,
+    "\tnode_id:", node_id,
+    "\tgpu_device_id:", gpu_device_id,
+    flush=True)
     start = time.time()
     if eval_set:
         model.fit(x_train, y_train, eval_set=(x_test, y_test))
