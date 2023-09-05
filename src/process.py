@@ -38,7 +38,7 @@ def get_arguments():
 	parser.add_argument("--max_depth", dest="max_depth", default  = -1, 
 						help="The allowed max depth of the trees. Default is infinite, but suggested to constrain max tree depth to prevent overfitting") # , ")						
 	parser.add_argument("--random_state", dest="random_state", default = 42)
-	parserr.add_argument('--verbose', dest='verbose', action='store_true',
+	parser.add_argument('--verbose', dest='verbose', action='store_true',
 						help='prints verbosely')
 	# parser.add_argument("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
 
