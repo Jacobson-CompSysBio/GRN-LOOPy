@@ -24,6 +24,7 @@ def get_arguments():
 						help='the device type you wish to use for training')
 	parser.add_argument('--use_mpi', dest='use_mpi', action='store_true',
 						help='uses mpi scheduler to run data')
+	parser.add_argument('--outfile', dest='outfile', action='store', default='preprocessed.tsv',
 						help='the base name for the output files. Default is preprocessed.tsv')
 	parser.add_argument("--boosting_type", dest="boosting_type", default  = 'gbdt', 
 						help="gbdt is commong gradient boosted tree. gbdt, rf, dart")
