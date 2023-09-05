@@ -110,8 +110,10 @@ def main():
 
 	features = df.columns
 	train, test = get_train_test_split(df)
-	global train_df = train
-	global test_df = test
+	global train_df
+	global test_df
+	train_df = train
+	test_df = test
 
 	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
 		if executor is not None:
