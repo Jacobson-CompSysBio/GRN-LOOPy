@@ -81,6 +81,7 @@ def run_mpi_model(feature_name):
 		verbose= verbose # -1 = silent, 0 = warn, 1 = info
 	)
 
+	print('running model', flush=True)
 	output = run_model(model, train_df, test_df, x_cols, y_col, eval_set=False, device=device,gpus_per_device=8)
 
 	return output
