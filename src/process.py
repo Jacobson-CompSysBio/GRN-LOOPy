@@ -11,20 +11,20 @@ from processing.data_helpers import get_train_test_split
 
 
 def get_arguments():
-    """
-    Extracts command line arguments. 
-    """
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--infile', type=str, dest='infile', required=True,
-                        help='the base input file dataframe')
-    parser.add_argument('--has_indices', dest='has_indices', action='store_true',
-                       help='signifies that dataset does not have indices')
-    parser.add_argument('--device', dest='device', action='store', default="cpu",
-                        help='the device type you wish to use for training')
-    parser.add_argument('--use_mpi', dest='use_mpi', action='store_true',
-                        help='uses mpi scheduler to run data')
-    parser.add_argument('--outfile', dest='outfile', action='store', default='preprocessed.tsv',
-                        help='the base name for the output files. Default is preprocessed.tsv')
+	"""
+	Extracts command line arguments. 
+	"""
+	parser = argparse.ArgumentParser(description='Process some integers.')
+	parser.add_argument('--infile', type=str, dest='infile', required=True,
+						help='the base input file dataframe')
+	parser.add_argument('--has_indices', dest='has_indices', action='store_true',
+					   help='signifies that dataset does not have indices')
+	parser.add_argument('--device', dest='device', action='store', default="cpu",
+						help='the device type you wish to use for training')
+	parser.add_argument('--use_mpi', dest='use_mpi', action='store_true',
+						help='uses mpi scheduler to run data')
+	parser.add_argument('--outfile', dest='outfile', action='store', default='preprocessed.tsv',
+						help='the base name for the output files. Default is preprocessed.tsv')
 	parse.add_arguments("--boosting_type", dest="boosting_type", default  = 'gbdt', 
 						help="gbdt is commong gradient boosted tree. gbdt, rf, dart")
 	parse.add_arguments("--objective", dest="objective", default  = 'regression',
@@ -41,10 +41,10 @@ def get_arguments():
 	parse.add_arguments("--random_state", dest="random_state", default = 42)						
 	parse.add_arguments("--device", dest="device", default  = "cpu")						
 	parse.add_arguments("--gpu_device_id", dest="gpu_device_id", default  = -1)						
-    parser.add_argument('--verbose', dest='verbose', action='store_true',
-                        help='prints verbosely')
+	parser.add_argument('--verbose', dest='verbose', action='store_true',
+						help='prints verbosely')
 
-    return parser.parse_args()
+	return parser.parse_args()
 
 train_df = None
 test_df = None
@@ -107,9 +107,9 @@ def main():
 	features = df.columns
 	train_df, test_df = get_train_test_split(df)
 
-    with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
-        if executor is not None:
-            collected_output = list(executor.map(run_mpi_model, features))
+	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
+		if executor is not None:
+			collected_output = list(executor.map(run_mpi_model, features))
 
 			pd.DataFrame(collected_output).to_csv("this_is_a_test")
 
