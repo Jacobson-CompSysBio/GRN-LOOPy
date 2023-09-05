@@ -84,6 +84,7 @@ def run_mpi_model(feature_name):
 		verbose= verbose # -1 = silent, 0 = warn, 1 = info
 	)
 
+	print('WE DID IT!')
 
 
 
@@ -108,7 +109,9 @@ def main():
 
 
 	features = df.columns
-	train_df, test_df = get_train_test_split(df)
+	train, test = get_train_test_split(df)
+	global train_df = train
+	global test_df = test
 
 	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
 		if executor is not None:
