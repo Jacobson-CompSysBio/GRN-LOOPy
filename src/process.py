@@ -8,6 +8,7 @@ import time
 from utils.file_helpers import read_dataframe
 from processing.create_model import create_model
 from processing.data_helpers import get_train_test_split
+from processing.run_model import run_model
 import argparse
 
 
@@ -61,11 +62,6 @@ device = None # "cpu",
 def run_mpi_model(feature_name):
 	x_cols = train_df.columns[train_df.columns != feature_name]
 	y_col = feature_name
-	x_train = train_df[x_cols]
-	x_test = test_df[x_cols]
-	y_train = train_df[y_col]
-	y_test = test_df[y_col]
-
 
 	rank = MPI.COMM_WORLD.Get_rank()
 	node_id = os.environ['SLURM_NODEID']
@@ -85,9 +81,9 @@ def run_mpi_model(feature_name):
 		verbose= verbose # -1 = silent, 0 = warn, 1 = info
 	)
 
-	print('WE DID IT!')
+	output = run_model(model, train_df, test_df, x_cols, y_col, eval_set=False, gpus_per_device=8)
 
-
+	return output
 
 
 
