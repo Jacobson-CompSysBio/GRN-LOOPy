@@ -14,7 +14,7 @@ def run_model(model, train, test, x_cols, y_col, eval_set=False, gpus_per_device
 
     rank = MPI.COMM_WORLD.Get_rank()
     node_id = os.environ['SLURM_NODEID']
-    gpu_device_id = rank % gpus_per_device
+    gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
 
     start = time.time()
     if eval_set:
@@ -30,6 +30,7 @@ def run_model(model, train, test, x_cols, y_col, eval_set=False, gpus_per_device
         'device': device,
         'rank': rank,
         'node_id': node_id,
+        'gpu_device_id': gpu_device_id,
         'n_jobs': n_jobs,
         'train_time': total,
         'r2': r2,
