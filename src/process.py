@@ -84,8 +84,8 @@ def run_mpi_model(feature_name):
 		verbose= verbose # -1 = silent, 0 = warn, 1 = info
 	)
 
-	print('running model', flush=True)
 	output = run_model(model, train_df, test_df, x_cols, y_col, eval_set=False, device=device,gpus_per_device=8)
+
 	output['rank']= rank
 	output['node_id']= node_id
 	output['gpu_device_id']= gpu_device_id
@@ -137,8 +137,6 @@ def main():
 	train_df = train
 	test_df = test
 
-	print(train_df.dtypes, flush=True)
-	print(test_df.dtypes, flush=True)
 	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
 		if executor is not None:
 			collected_output = list(executor.map(run_mpi_model, features))

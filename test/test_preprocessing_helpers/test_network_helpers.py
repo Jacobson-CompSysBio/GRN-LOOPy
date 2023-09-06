@@ -13,13 +13,13 @@ class TestConvertDFToNetwork:
 	"""
 	This class tests the function `convert_df_to_network`
 
-		from  to  corr            E──┐
-		A     B   1                  │       F
-		A     C   1           D──────B────C──┘
-		B     C   1   =====>         │    │ 
-		B     D   1                  │    │
-		B     E   1                  A────┘
-		C     F   1 
+		from  to  corr			E──┐
+		A	 B   1				  │	   F
+		A	 C   1		   D──────B────C──┘
+		B	 C   1   =====>		 │	│ 
+		B	 D   1				  │	│
+		B	 E   1				  A────┘
+		C	 F   1 
 	
    		   a  b  c  d  e  f
 		a  0  1  1  0  0  0
@@ -79,8 +79,8 @@ class TestCreateRepresentativeSet:
 		
 		Input is a disconnected network filled with cliques. 
 		┌────┐
-		B──C │     G
-		│ /│ │    /│   ===> Representatives: {B, E}
+		B──C │	 G
+		│ /│ │	/│   ===> Representatives: {B, E}
 		│/ │ │   / │
 		A──D─┘  E──F
 		"""
@@ -323,24 +323,24 @@ class TestEXtractRepresentativesAndSaveToFile:
 # 	This class tests the function `convert_directed_to_undirected`
 
 		
-# 		to	from	weight	       E──┐
-# 		e	b		1   	          ▼
-# 		d	b		1     	   D─────►B◄──►C◄──►F
-# 		c	b		0.7  	          │    ▲
-# 		b	a		1     	          ▼    │
-# 		b	c		0.5   	          A◄───┘
+# 		to	from	weight		   E──┐
+# 		e	b		1   			  ▼
+# 		d	b		1	 	   D─────►B◄──►C◄──►F
+# 		c	b		0.7  			  │	▲
+# 		b	a		1	 			  ▼	│
+# 		b	c		0.5   			  A◄───┘
 # 		c	a		0.25
 # 		a	c		0.9
 # 		c	f		0.3
 # 		f	c		0.8
 	
-#    		   a    b    c     d  e  f            a    b    c     d  e  f   
-# 		a  0    1    0.25  0  0  0         a  0    1    0.9   0  0  0   
-# 		b  0    0    0.7   1  1  0         b  1    0    0.7   1  1  0   
-# 		c  0.9  0.5  0     0  0  0.8 ==>   c  0.9  0.7  0     0  0  0.8 
-# 		d  0    0    0     0  0  0         d  0    1    0     0  0  0   
-# 		e  0    0    0     0  0  0         e  0    1    0     0  0  0   
-# 		f  0    0    0.3   0  0  0         f  0    0    0.8   0  0  0   
+#			   a	b	c	 d  e  f			a	b	c	 d  e  f   
+# 		a  0	1	0.25  0  0  0		 a  0	1	0.9   0  0  0   
+# 		b  0	0	0.7   1  1  0		 b  1	0	0.7   1  1  0   
+# 		c  0.9  0.5  0	 0  0  0.8 ==>   c  0.9  0.7  0	 0  0  0.8 
+# 		d  0	0	0	 0  0  0		 d  0	1	0	 0  0  0   
+# 		e  0	0	0	 0  0  0		 e  0	1	0	 0  0  0   
+# 		f  0	0	0.3   0  0  0		 f  0	0	0.8   0  0  0   
 # 	"""
 
 # 	def test_converts_directed_to_undirected(self): 
@@ -351,12 +351,12 @@ class TestEXtractRepresentativesAndSaveToFile:
 
 
 # 		adj_array =  igraph.Matrix([
-# 			[ 0,      0, 0.9, 0, 0, 0  ], 
-# 			[ 1,      0, 0.5, 0, 0, 0  ],
+# 			[ 0,	  0, 0.9, 0, 0, 0  ], 
+# 			[ 1,	  0, 0.5, 0, 0, 0  ],
 # 			[ 0.25, 0.7,   0, 0, 0, 0.3],
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  0, 0.8, 0, 0, 0  ] 
 # 		])
 
 # 		g1 = igraph.Graph.Weighted_Adjacency(adj_array)
@@ -364,12 +364,12 @@ class TestEXtractRepresentativesAndSaveToFile:
 # 		actual_output = network_helpers.convert_directed_to_undirected(g1)
 # 		print("ACTUAL OUTPUT: ", actual_output)
 # 		expected_adj_array =  igraph.Matrix([
-# 			[ 0,      1, 0.9, 0, 0, 0  ], 
-# 			[ 1,      0, 0.7, 1, 1, 0  ],
+# 			[ 0,	  1, 0.9, 0, 0, 0  ], 
+# 			[ 1,	  0, 0.7, 1, 1, 0  ],
 # 			[ 0.9 , 0.7,   0, 0, 0, 0.8],
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  0, 0.8, 0, 0, 0  ] 
 # 		])
 
 # 		actual_weighted_adj = actual_output.get_adjacency(attribute='weight')
@@ -384,12 +384,12 @@ class TestEXtractRepresentativesAndSaveToFile:
 
 
 # 		adj_array =  igraph.Matrix([
-# 			[ 0,      0, 0.9, 0, 0, 0  ], 
-# 			[ 1,      0, 0.5, 0, 0, 0  ],
+# 			[ 0,	  0, 0.9, 0, 0, 0  ], 
+# 			[ 1,	  0, 0.5, 0, 0, 0  ],
 # 			[ 0.25, 0.7,   0, 0, 0, 0.3],
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  0, 0.8, 0, 0, 0  ] 
 # 		])
 
 # 		g1 = igraph.Graph.Weighted_Adjacency(adj_array)
@@ -397,12 +397,12 @@ class TestEXtractRepresentativesAndSaveToFile:
 # 		actual_output = network_helpers.convert_directed_to_undirected(g1)
 # 		print("ACTUAL OUTPUT: ", actual_output)
 # 		expected_adj_array =  igraph.Matrix([
-# 			[ 0,      1, 0.9, 0, 0, 0  ], 
-# 			[ 1,      0, 0.7, 1, 1, 0  ],
+# 			[ 0,	  1, 0.9, 0, 0, 0  ], 
+# 			[ 1,	  0, 0.7, 1, 1, 0  ],
 # 			[ 0.9 , 0.7,   0, 0, 0, 0.8],
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      1,   0, 0, 0, 0  ], 
-# 			[ 0,      0, 0.8, 0, 0, 0  ] 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  1,   0, 0, 0, 0  ], 
+# 			[ 0,	  0, 0.8, 0, 0, 0  ] 
 # 		])
 
 # 		actual_weighted_adj = actual_output.get_adjacency(attribute='weight')
