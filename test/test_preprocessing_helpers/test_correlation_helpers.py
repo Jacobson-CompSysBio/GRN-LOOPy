@@ -16,16 +16,16 @@ base_dataframe = pd.DataFrame(data= base_data)
 threshold = 0.95
 
 correlation_matrix_data = {
-	"a": [    1,       -1,  0.5773],
-	"b": [   -1,        1, -0.5773],
-	"c": [0.5773, -0.5773,       1]
+	"a": [	1,	   -1,  0.5773],
+	"b": [   -1,		1, -0.5773],
+	"c": [0.5773, -0.5773,	   1]
 }
 correlation_df = pd.DataFrame(correlation_matrix_data)
 correlation_df.index = correlation_df.columns
 
 upper_right_corr_df_data = {
-			"a": [   0.0,     0.0, 0.0],
-			"b": [  -1.0,     0.0, 0.0],
+			"a": [   0.0,	 0.0, 0.0],
+			"b": [  -1.0,	 0.0, 0.0],
 			"c": [0.5773, -0.5773, 0.0]
 		}
 upper_right_corr_df = pd.DataFrame(upper_right_corr_df_data)
