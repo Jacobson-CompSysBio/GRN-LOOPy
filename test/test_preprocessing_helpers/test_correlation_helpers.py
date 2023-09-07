@@ -132,7 +132,7 @@ class TestCreateCorrelationList:
 		The function then generates the outfile name and returns the dataframe. 
 		"""
 
-		file_name = "./test/test_data/test_input_networks/test_net_noidx.tsv"
+		file_name = "./test/test_data/test_raw_input/test_net_no_header.tsv"
 		has_indices = False
 		corr_thresh = threshold
 		save_corr = False
@@ -155,7 +155,7 @@ class TestCreateCorrelationList:
 
 		expected_corr_call_object = pd.read_csv(file_name, sep='\t')
 		expected_output = stacked_corr_df
-		expected_output_save_file = './test/test_data/test_input_networks/test_net_noidx_correlation_over_0.95.tsv'
+		expected_output_save_file = './test/test_data/test_raw_input/test_net_no_header_noidx_correlation_over_0.95.tsv'
 
 		## pytest does not like asserts with dfs
 		pd.testing.assert_frame_equal(actual_output, expected_output)
@@ -183,7 +183,7 @@ class TestCreateCorrelationList:
 		The function then generates the outfile name and returns the dataframe. 
 		"""
 
-		file_name = "./test/test_data/test_input_networks/test_net_noidx.tsv"
+		file_name = "./test/test_data/test_raw_input/test_net_no_header.tsv"
 		has_indices = False
 		corr_thresh = threshold
 		save_corr = True
@@ -206,7 +206,7 @@ class TestCreateCorrelationList:
 
 		expected_corr_call_object = pd.read_csv(file_name, sep='\t')
 		expected_output = stacked_corr_df
-		expected_output_save_file = './test/test_data/test_input_networks/test_net_noidx_correlation_over_0.95.tsv'
+		expected_output_save_file = './test/test_data/test_raw_input/test_net_no_header_correlation_over_0.95.tsv'
 
 		## pytest does not like asserts with dfs
 		pd.testing.assert_frame_equal(actual_output, expected_output)
