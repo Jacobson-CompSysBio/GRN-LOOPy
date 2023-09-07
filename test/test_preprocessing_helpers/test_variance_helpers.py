@@ -143,10 +143,10 @@ class TestRemoveLowVarAndSave:
 
 	def test_remove_low_var_and_save_no_index_tsv(self, mocker): 
 		"""
-		This test calls remove_low_var_and_save with a dataframe that has indices
+		This test calls remove_low_var_and_save with a dataframe that has no indices
 		"""
 
-		input_network_path = "./test/test_data/test_input_networks/test_net_noidx.tsv"
+		input_network_path = "./test/test_data/test_raw_input/test_net_no_header.tsv"
 		input_df = pd.read_csv(input_network_path, sep='\t')
 		has_index_col = False
 		print_meta = True
@@ -184,7 +184,7 @@ class TestRemoveLowVarAndSave:
 		This test calls remove_low_var_and_save with a dataframe that has indices
 		"""
 
-		input_network_path = "./test/test_data/test_input_networks/test_net_with_idx.tsv"
+		input_network_path = "./test/test_data/test_raw_input/test_net_w_header_indexed.tsv"
 		input_df = pd.read_csv(input_network_path, sep='\t', index_col=0)
 		has_index_col = True
 	
@@ -217,8 +217,8 @@ class TestRemoveLowVarAndSave:
 		This test calls remove_low_var_and_save with a dataframe that has indices
 		"""
 		
-		input_network_path = "./test/test_data/test_input_networks/test_net_noidx.csv"
-		sep=','
+		input_network_path = "./test/test_data/test_raw_input/test_net_w_header.tsv"
+		sep='\t'
 		input_df = pd.read_csv(input_network_path, sep=sep)
 		has_index_col = False
 	
