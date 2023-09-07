@@ -11,6 +11,7 @@ def convert_df_to_network(df):
 	df.columns = ["source", "target", "weight"] 
 	network = nx.from_pandas_edgelist(df)
 	
+	assert type(network) != nx.DiGraph
 	return network
 
 def create_representative_set(network): 
@@ -49,7 +50,6 @@ def write_representative_map_to_file(element_map, outfile_name):
 	print(df.head())
 	df.to_csv(outfile_name, sep='\t', index=None)
 	
-							
 def extract_representatives_and_save_to_files(df=None, df_filepath=None, original_data_file=None, outfile_name = None, delim='\t'): 
 	"""
 	This takes in a dataframe edgelist or filepath to a dataframe edgelist, 
@@ -80,7 +80,7 @@ def extract_representatives_and_save_to_files(df=None, df_filepath=None, origina
 	
 	return representatives, non_representatives
 
-def remove_representatives_from_main_dataset_and_save(raw_data_file, non_representatives): 
+def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_representatives: list): 
 	"""
 	This function reads in the raw data and removes the non_representative elements.
 	"""
@@ -98,41 +98,41 @@ def remove_representatives_from_main_dataset_and_save(raw_data_file, non_represe
 	return filtered_df
 
 
-def generate_igraph_graph_from_weighted_edgelist(edge_df: pd.DataFrame): 
-	## one: create index map for edge df 
+# def generate_igraph_graph_from_weighted_edgelist(edge_df: pd.DataFrame): 
+# 	## one: create index map for edge df 
 	
-	g = igraph.Graph.DataFrame(
-		edge_df, 
-		directed=True, 
-		vertices=pd.DataFrame({'name':['a','b','c','d','e','f']}))
+# 	g = igraph.Graph.DataFrame(
+# 		edge_df, 
+# 		directed=True, 
+# 		vertices=pd.DataFrame({'name':['a','b','c','d','e','f']}))
 
 
-def get_weighted_edgelist_with_names(g: igraph.Graph): 
-	"""
-	This function takes an igraph graph
-	and returns a weighted edgelist as a pandas 
-	dataframe. 
-	"""
-	df = g.get_edge_dataframe()
-	df_vert = g.get_vertex_dataframe()
-	df['source'].replace(df_vert['name'], inplace=True)
-	df['target'].replace(df_vert['name'], inplace=True)
-	df_vert.set_index('name', inplace=True)
+# def get_weighted_edgelist_with_names(g: igraph.Graph): 
+# 	"""
+# 	This function takes an igraph graph
+# 	and returns a weighted edgelist as a pandas 
+# 	dataframe. 
+# 	"""
+# 	df = g.get_edge_dataframe()
+# 	df_vert = g.get_vertex_dataframe()
+# 	df['source'].replace(df_vert['name'], inplace=True)
+# 	df['target'].replace(df_vert['name'], inplace=True)
+# 	df_vert.set_index('name', inplace=True)
 
-def convert_directed_to_undirected(g: igraph.Graph, collapse_method=max): 
-	"""
-	This method converts a directed weighted network to an undirected 
-	weighted network. Depending on the method chosen, those weights
-	will be taken.
-	"""
+# def convert_directed_to_undirected(g: igraph.Graph, collapse_method=max): 
+# 	"""
+# 	This method converts a directed weighted network to an undirected 
+# 	weighted network. Depending on the method chosen, those weights
+# 	will be taken.
+# 	"""
 
-	if type(g) == nx.Graph:
-		# convert the graph
-		g = igraph.Graph.from_networkx(g)
-	print("posti f ", g)
-	g = g.as_undirected(
-			mode='collapse',
-			combine_edges=collapse_method
-		)
-	print("FININSHED ", g)
-	return g
+# 	if type(g) == nx.Graph:
+# 		# convert the graph
+# 		g = igraph.Graph.from_networkx(g)
+# 	print("posti f ", g)
+# 	g = g.as_undirected(
+# 			mode='collapse',
+# 			combine_edges=collapse_method
+# 		)
+# 	print("FININSHED ", g)
+# 	return g
