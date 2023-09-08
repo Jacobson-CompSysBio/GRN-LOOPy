@@ -2,6 +2,7 @@ import pandas as pd
 import networkx as nx
 import igraph
 import random
+from ..utils import file_helpers
 
 ### NETWORK Functions: 
 def convert_df_to_network(df):
@@ -59,7 +60,7 @@ def extract_representatives_and_save_to_files(df=None, df_filepath=None, origina
 	if df is None and df_filepath is None: 
 		raise Exception("No dataframe or filepath included") 
 	
-	df = df if df is not None else pd.read_csv(df_filepath, sep=delim)
+	df = df if df is not None else file_helpers.read_dataframe(df_filepath, sep=delim)
 
 	
 	network = convert_df_to_network(df)
@@ -80,11 +81,11 @@ def extract_representatives_and_save_to_files(df=None, df_filepath=None, origina
 	
 	return representatives, non_representatives
 
-def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_representatives: list): 
+def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_representatives: list, index_col=None, header_idx=0): 
 	"""
 	This function reads in the raw data and removes the non_representative elements.
 	"""
-	df = pd.read_csv(raw_data_file, sep="\t")
+	df = file_helpers.read_dataframe(raw_data_file, header=header_idx, index_col=index_col)
 	
 	filtered_cols = list(filter(lambda x: x not in non_representatives, df.columns))
 	filtered_df = df[ filtered_cols ]
