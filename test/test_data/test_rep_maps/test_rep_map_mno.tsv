@@ -1,0 +1,8 @@
+non_representative	representative	is_representative
+M	M	1
+P	M	0
+N	N	1
+R	N	0
+S	N	0
+T	T	1
+U	T	0
