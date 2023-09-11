@@ -1,12 +1,9 @@
 import os
 import random
 import time
-from mpi4py import MPI
-from mpi4py.futures import MPICommExecutor
-from sklearn.metrics import r2_score
+from sklearn import metrics
 
-def run_model(model, train, test, x_cols, y_col, eval_set=False, device='cpu', gpus_per_device=8):
-	print("splitting data", flush=True)
+def run_model(model, train, test, x_cols, y_col, eval_set=False, device='cpu'):
 	x_train = train[x_cols]
 	y_train = train[y_col]
 	x_test = test[x_cols]
@@ -20,17 +17,18 @@ def run_model(model, train, test, x_cols, y_col, eval_set=False, device='cpu', g
 	stop = time.time()
 	total = stop - start
 	prediction = model.predict(x_test)
-	r2 = r2_score(prediction, y_test)
+	r2 = metrics.r2_score(prediction, y_test)
 
-	imps = ",".join(model.feature_importances_)
-	features = ','.join(x_cols)
+	imps = ",".join(map(lambda x: f"{x}", model.feature_importances_))
+	features = ','.join(map(lambda x: f"{x}", x_cols))
 
 	return {
 		'device': device,
 		'train_time': total,
 		'r2': r2,
 		'feature_imps': imps,
-		'eval_set': eval_set,
+		'features': features,
+		'eval_set': eval_set
 	}
 
 
