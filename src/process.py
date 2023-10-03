@@ -8,9 +8,8 @@ import time
 from utils.file_helpers import read_dataframe
 from processing.create_model import create_model
 from processing.data_helpers import get_train_test_split
-from processing.run_model import run_model
+from processing.run_model import run_and_doc_model, hyper_parameter_tune
 import argparse
-
 
 def get_arguments():
 	"""
@@ -42,13 +41,15 @@ def get_arguments():
 	parser.add_argument("--num_leaves", dest="num_leaves", default  = 31,
 						help="max number of leaves in one tree")						
 	parser.add_argument("--max_depth", dest="max_depth", default  = -1, 
-						help="The allowed max depth of the trees. Default is infinite, but suggested to constrain max tree depth to prevent overfitting") # , ")						
+						help="The allowed max depth of the trees. Default is infinite, but suggested to constrain max tree depth to prevent overfitting")
+	parser.add_argument("--parameter_tune", dest="parameter_tune", action = "store_true",
+						help="This flag enables parameter tuning within the model for a more well fit model.") # , ")						
 	parser.add_argument("--random_state", dest="random_state", default = 42)
-	
 	parser.add_argument("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
-
 	return parser.parse_args()
 
+dataset = None
+parameter_tune = None
 train_df = None
 test_df = None
 device = None 
@@ -71,6 +72,12 @@ def run_mpi_model(feature_name):
 	gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
 	n_jobs = -1
 
+	if parameter_tune: 
+		kfold_output_df  = hyper_parameter_tune()
+
+
+
+
 	model = create_model(
 		boosting_type = boosting_type, # 'gbdt'
 		objective = objective, # 'regression', 'mape'
@@ -84,7 +91,8 @@ def run_mpi_model(feature_name):
 		verbose= verbose # -1 = silent, 0 = warn, 1 = info
 	)
 
-	output = run_model(model, train_df, test_df, x_cols, y_col, eval_set=False, device=device,gpus_per_device=8)
+
+	output = run_and_doc_model(model, train_df, test_df, x_cols, y_col, eval_set=False, device=device)
 
 	output['rank']= rank
 	output['node_id']= node_id
@@ -98,7 +106,8 @@ def run_mpi_model(feature_name):
 
 def main():
 	args = get_arguments()
-
+	global dataset
+	global parameter_tune
 	global train_df
 	global test_df
 	global device
@@ -127,13 +136,14 @@ def main():
 	max_depth = args.max_depth
 	random_state = args.random_state
 	device = args.device
+	parameter_tune = args.parameter_tune
 	verbose = args.verbose
 	outfile = args.outfile
 
-	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
+	dataset = read_dataframe(df_filepath, sep=delim, header=header_idx)
 
-	features = df.columns
-	train, test = get_train_test_split(df)
+	features = dataset.columns
+	train, test = get_train_test_split(dataset)
 	train_df = train
 	test_df = test
 
@@ -141,7 +151,7 @@ def main():
 		if executor is not None:
 			collected_output = list(executor.map(run_mpi_model, features))
 
-			pd.DataFrame(collected_output).to_csv(outfile)
+			pd.DataFrame(collected_output).to_csv(outfile, sep='\t', index=None)
 			# print(collected_output)
 
 

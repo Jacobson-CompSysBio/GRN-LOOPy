@@ -1,6 +1,5 @@
 import pandas as pd
 import networkx as nx
-import igraph
 import random
 from ..utils import file_helpers
 

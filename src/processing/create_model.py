@@ -10,18 +10,16 @@ def create_model(
 	random_state= 42,
 	device = "cpu",
 	gpu_device_id = -1,
+	min_data_in_leaf = 1,
 	verbose= 1 # -1 = silent, 0 = warn, 1 = info
 	):
 	"""
 	TODO: specifically for lgbm, but this function ought to return any type of 
 	tree based model that we can run embarassingly to get feature importances
 	"""
-
 	kwargs = {}
 	if device == "gpu": 
 		kwargs['gpu_device_id'] = gpu_device_id
-
-
 	model = lgb.LGBMRegressor(
 		boosting_type= boosting_type,
 		objective= objective,
@@ -34,6 +32,4 @@ def create_model(
 		device=device, 
 		**kwargs
 	)
-
 	return model
- 

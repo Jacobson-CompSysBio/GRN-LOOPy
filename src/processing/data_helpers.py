@@ -29,7 +29,7 @@ def get_train_test_split(df = None,
 		df[n_features] = y
 		feature_name = n_features
 	if (df is not None): 
-		df_train, df_test = model_selection.train_test_split(df)
+		df_train, df_test = model_selection.train_test_split(df, test_size=0.2)
 		if feature_name is None: 
 			return df_train, df_test
 	if (df_train is not None and df_test is not None): 
