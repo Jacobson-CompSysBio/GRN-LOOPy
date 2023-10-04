@@ -1,0 +1,12 @@
+from	to	weight
+B	A	0.1
+E	B	0.25
+C	B	0.3
+E	D	0.25
+F	E	0.1
+F	C	0.5
+G	E	0.75
+H	E	0.95
+H	F	0.05
+H	C	0.6
+E	H	0.87

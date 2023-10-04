@@ -1,4 +1,5 @@
 import networkx as nx
+import igraph
 import numpy as np 
 import pandas as pd
 import pytest
@@ -12,13 +13,13 @@ class TestConvertDFToNetwork:
 	"""
 	This class tests the function `convert_df_to_network`
 
-		from  to  corr            E──┐
-		A     B   1                  │       F
-		A     C   1           D──────B────C──┘
-		B     C   1   =====>         │    │ 
-		B     D   1                  │    │
-		B     E   1                  A────┘
-		C     F   1 
+		from  to  corr			E──┐
+		A	 B   1				  │	   F
+		A	 C   1		   D──────B────C──┘
+		B	 C   1   =====>		 │	│ 
+		B	 D   1				  │	│
+		B	 E   1				  A────┘
+		C	 F   1 
 	
    		   a  b  c  d  e  f
 		a  0  1  1  0  0  0
@@ -78,8 +79,8 @@ class TestCreateRepresentativeSet:
 		
 		Input is a disconnected network filled with cliques. 
 		┌────┐
-		B──C │     G
-		│ /│ │    /│   ===> Representatives: {B, E}
+		B──C │	 G
+		│ /│ │	/│   ===> Representatives: {B, E}
 		│/ │ │   / │
 		A──D─┘  E──F
 		"""
@@ -150,8 +151,7 @@ class TestWriteRepresentativeMapToFile:
 		})
 		to_csv_mock.assert_called_once_with(file_name, sep='\t', index=None)
 
-
-class TestEXtractRepresentativesAndSaveToFile: 
+class TestExtractRepresentativesAndSaveToFile: 
 	"""
 	This class tests the function extract_representatives_and_save_to_files which 
 	either takes a correlation dataframe, or reads one ine, creates a representative
@@ -199,7 +199,7 @@ class TestEXtractRepresentativesAndSaveToFile:
 		input_df = self.as_df
 
 		read_csv_mock = mocker.patch(
-			'pandas.read_csv',
+			'src.utils.file_helpers.read_dataframe',
 			return_value = input_df
 		)
 		convert_mock = mocker.patch(
@@ -315,3 +315,118 @@ class TestEXtractRepresentativesAndSaveToFile:
 		create_representative_mock.assert_called_once_with(self.as_graph)
 
 		write_representative_map_mock.assert_called_once_with(self.rep_map, expected_file_name)
+
+
+class TestRemoveRepresentativesFromMainDatasetAndSave: 
+	"""
+	This class tests the function remove_representatives_from_main_dataset_and_save which 
+	takes in the base X matrix in the form of a pd.DataFrame and a list of values. All values 
+	within the `non_representatives` list are then filtered from the desired columns. 
+	"""
+	def test_remove_representatives(self, mocker): 
+		input_file = "./test/test_data/test_raw_input/test_net_w_header.tsv"
+		non_representatives = ['c','d']
+
+		to_csv_mock = mocker.patch(
+			'pandas.DataFrame.to_csv',
+			return_value = None
+		)
+
+		actual_output = network_helpers.remove_representatives_from_main_dataset_and_save(
+			input_file,
+			non_representatives,
+			header_idx=0,
+			index_col=None)
+
+		expected_output_name = "./test/test_data/test_raw_input/test_net_w_header_no_correlated_data.tsv"
+		expected_output = pd.DataFrame({
+			"a": [1.279692883938478, 0.061079021269278416, 1.3706523044571344, -1.3924930682942556],
+			"b": [1.1115769067246926, 0.2699872501563673, 0.7322939908406308, 2.513860079055505],
+			"e": [-0.04706541266501137, -0.11233976983350678,-1.8382605042730482, 0.488741129986662]
+		})
+
+		pd.testing.assert_frame_equal(actual_output, expected_output)
+		to_csv_mock.assert_called_once_with(expected_output_name, sep='\t', index=False)
+
+	def test_remove_representatives_index(self, mocker): 
+		input_file_index = "./test/test_data/test_raw_input/test_net_w_header_indexed.tsv"
+		non_representatives = ['c','d']
+
+		to_csv_mock = mocker.patch(
+			'pandas.DataFrame.to_csv',
+			return_value = None
+		)
+
+		actual_output = network_helpers.remove_representatives_from_main_dataset_and_save(
+			input_file_index,
+			non_representatives,
+			header_idx=0,
+			index_col=0)
+
+		print("ACTUAL")
+		print(actual_output)
+		print("EXPECTED")
+		expected_output_name = "./test/test_data/test_raw_input/test_net_w_header_indexed_no_correlated_data.tsv"
+		expected_output = pd.DataFrame({
+			"a": [1.279692883938478, 0.061079021269278416, 1.3706523044571344, -1.3924930682942556],
+			"b": [1.1115769067246926, 0.2699872501563673, 0.7322939908406308, 2.513860079055505],
+			"e": [-0.04706541266501137, -0.11233976983350678,-1.8382605042730482, 0.488741129986662]
+		})
+
+		print(expected_output)
+		pd.testing.assert_frame_equal(actual_output, expected_output)
+		to_csv_mock.assert_called_once_with(expected_output_name, sep='\t', index=False)
+
+	def test_remove_representatives_index(self, mocker): 
+		input_file_index = "./test/test_data/test_raw_input/test_net_no_header.tsv"
+		non_representatives = [2,3]
+
+		to_csv_mock = mocker.patch(
+			'pandas.DataFrame.to_csv',
+			return_value = None
+		)
+
+		actual_output = network_helpers.remove_representatives_from_main_dataset_and_save(
+			input_file_index,
+			non_representatives,
+			header_idx=None,
+			index_col=None)
+
+		expected_output_name = "./test/test_data/test_raw_input/test_net_no_header_no_correlated_data.tsv"
+		expected_output = pd.DataFrame({
+			0 : [1.279692883938478, 0.061079021269278416, 1.3706523044571344, -1.3924930682942556],
+			1 : [1.1115769067246926, 0.2699872501563673, 0.7322939908406308, 2.513860079055505],
+			4 : [-0.04706541266501137, -0.11233976983350678,-1.8382605042730482, 0.488741129986662]
+		})
+
+		pd.testing.assert_frame_equal(actual_output, expected_output)
+		to_csv_mock.assert_called_once_with(expected_output_name, sep='\t', index=False)
+
+	def test_remove_representatives(self, mocker): 
+		import os
+		print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", os.getcwd())
+		
+		input_file = "./test/test_data/test_raw_input/test_net_w_header.tsv"
+		non_representatives = ['c','d']
+
+
+		to_csv_mock = mocker.patch(
+			'pandas.DataFrame.to_csv',
+			return_value = None
+		)
+
+		actual_output = network_helpers.remove_representatives_from_main_dataset_and_save(
+			input_file,
+			non_representatives,
+			header_idx=0,
+			index_col=None)
+
+		expected_output_name = "./test/test_data/test_raw_input/test_net_w_header_no_correlated_data.tsv"
+		expected_output = pd.DataFrame({
+			"a": [1.279692883938478, 0.061079021269278416, 1.3706523044571344, -1.3924930682942556],
+			"b": [1.1115769067246926, 0.2699872501563673, 0.7322939908406308, 2.513860079055505],
+			"e": [-0.04706541266501137, -0.11233976983350678,-1.8382605042730482, 0.488741129986662]
+		})
+
+		pd.testing.assert_frame_equal(actual_output, expected_output)
+		to_csv_mock.assert_called_once_with(expected_output_name, sep='\t', index=False)
