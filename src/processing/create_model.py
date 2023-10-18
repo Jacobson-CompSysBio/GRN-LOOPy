@@ -1,8 +1,11 @@
 import lightgbm as lgb
+from sklearn.inspection import permutation_importance
+from sklearn.model_selection import permutation_test_score
 from scipy import stats
-from sklearn.metrics import r2_score
+from sklearn import metrics
 from sklearn.svm import SVR
 from xicor import xicor
+import time
 
 def create_lgb_model(
     boosting_type = 'gbdt', # 'gbdt'
