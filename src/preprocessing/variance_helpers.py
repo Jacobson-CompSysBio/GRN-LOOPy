@@ -23,7 +23,8 @@ def remove_low_variance_features(raw_df: pd.DataFrame, variance_thresh: float, p
 	This function removes features with variance that
 	falls under the threshold variance_thresh
 	"""
-	
+
+	# TODO: Update this to use zscore?
 	threshold_mask = raw_df.var() >= variance_thresh
 	high_var_columns = raw_df.columns[threshold_mask]
 
