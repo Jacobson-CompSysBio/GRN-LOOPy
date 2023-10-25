@@ -1,8 +1,7 @@
 import pandas as pd
 import networkx as nx
-import igraph
 import random
-from ..utils import file_helpers
+from src.utils import file_helpers
 
 ### NETWORK Functions: 
 def convert_df_to_network(df):
