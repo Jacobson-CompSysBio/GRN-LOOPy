@@ -15,13 +15,13 @@ def get_arguments():
 						help='the base input file dataframe')
 	parser.add_argument('--has_indices', dest='has_indices', action='store_true',
 					   help='signifies that dataset does not have indices')
-	parser.add_argument('--corr_thresh', dest='corr_thresh', action='store', default=0.95,
-						help='the threshold at which to cut off values. Default 0.95')
+	parser.add_argument('--corr_thresh', dest='corr_thresh', action='store',  default=0.95,
+						type=float, help='the threshold at which to cut off values. Default 0.95')
 	parser.add_argument('--save_corr', dest='save_corr', action='store_true',
 						help='saves the correlation data to file')
 	parser.add_argument('--remove_high_corr', dest='remove_high_corr', action='store_true',
 						help='removes highly correlated values from the dataset.')
-	parser.add_argument('--cv_thresh', dest='cv_thresh', action='store', default=0.05,
+	parser.add_argument('--cv_thresh', dest='cv_thresh', action='store', default=0.01,
 						help='the minimal threshold of a coefficient of variance to keep: mu/sigma')
 	parser.add_argument('--remove_low_variance', dest='remove_low_variance', action='store_true',
 						help="removes low variance elements using the cv_thresh from data and saves.")
@@ -85,7 +85,7 @@ def main():
 			print("Saving Dataset with Nonrepresentatives Removed")
 
 		# TODO: Change the name! we're removing nonreps
-		remove_representatives_from_main_dataset_and_save(input_file, non_representatives) 
+		remove_representatives_from_main_dataset_and_save(input_file, non_representatives, has_indices=has_indices) 
 
 if __name__ == "__main__":
 	main()

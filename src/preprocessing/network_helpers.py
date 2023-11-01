@@ -1,7 +1,7 @@
 import pandas as pd
 import networkx as nx
 import random
-from src.utils import file_helpers
+from utils import file_helpers
 
 ### NETWORK Functions: 
 def convert_df_to_network(df):
@@ -80,11 +80,11 @@ def extract_representatives_and_save_to_files(df=None, df_filepath=None, origina
 	
 	return representatives, non_representatives
 
-def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_representatives: list, index_col=None, header_idx=0): 
+def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_representatives: list, has_indices=None, header_idx=0): 
 	"""
 	This function reads in the raw data and removes the non_representative elements.
 	"""
-	df = file_helpers.read_dataframe(raw_data_file, header=header_idx, index_col=index_col)
+	df = file_helpers.read_dataframe(raw_data_file, header=header_idx, has_indices=has_indices)
 	
 	filtered_cols = list(filter(lambda x: x not in non_representatives, df.columns))
 	filtered_df = df[ filtered_cols ]

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+from utils import file_helpers
 
 ### CORRELATION Functions
 def correlate_data(df: pd.DataFrame, has_index_col: bool) ->  pd.DataFrame:
@@ -37,7 +37,13 @@ def stack_data(df: pd.DataFrame, threshold: float = 0.95) -> pd.DataFrame:
 	This stacks data into a 1 to 1 of the correlation matrix.
 	"""
 	df = df.stack().reset_index()
-	df = df[ df[0].abs() > threshold ]
+	stack_values = df.columns[-1]
+	print(df)
+	print('final column', stack_values)
+	print(df[stack_values].abs())
+	print(type(threshold))
+	df = df[ df[stack_values].abs() > threshold ]
+	print(df)
 	df.columns = ['from', 'to', 'corr']
 	return df.reset_index(drop = True)
 
@@ -48,12 +54,15 @@ def create_correlation_list(filename: str, has_indices: bool, corr_thresh: float
 
 	Data are then saved to file. 
 	"""
-	df = pd.read_csv(filename, sep='\t')
+	df = file_helpers.read_dataframe(filename, header=True, sep='\t', has_indices=has_indices)
+	print(df) 
 	df = correlate_data(df, has_indices)
-
+	print('post correlation')
 	df = extract_correlates_to_upper_right(df)
+	print('post extraction') 
 	df = stack_data(df, corr_thresh)
-
+	
+	print('done')
 	base_name = '.'.join(filename.split('.')[0:-1])
 	outfile_name = f"{base_name}_correlation_over_{corr_thresh}.tsv"
 
