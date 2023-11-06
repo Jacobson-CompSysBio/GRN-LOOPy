@@ -46,6 +46,7 @@ def main():
 	cv_thresh = args.cv_thresh
 	remove_low_variance = args.remove_low_variance
 	save_corr = args.save_corr
+	outfile = args.outfile
 	verbose = args.verbose
 
 
@@ -85,7 +86,7 @@ def main():
 			print("Saving Dataset with Nonrepresentatives Removed")
 
 		# TODO: Change the name! we're removing nonreps
-		remove_representatives_from_main_dataset_and_save(input_file, non_representatives, has_indices=has_indices) 
+		remove_representatives_from_main_dataset_and_save(input_file, non_representatives, has_indices=has_indices, outfile=outfile) 
 
 if __name__ == "__main__":
 	main()
