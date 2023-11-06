@@ -80,7 +80,7 @@ def extract_representatives_and_save_to_files(df=None, df_filepath=None, origina
 	
 	return representatives, non_representatives
 
-def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_representatives: list, has_indices=None, header_idx=0): 
+def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_representatives: list, has_indices=None, header_idx=0, outfile=None): 
 	"""
 	This function reads in the raw data and removes the non_representative elements.
 	"""
@@ -91,8 +91,8 @@ def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_re
 	
 	base_name = '.'.join(raw_data_file.split('.')[0:-1])
 	
-	outfile_name = f"{base_name}_no_correlated_data.tsv"
-
+	outfile_name = outfile if outfile is not None else  f"{base_name}_no_correlated_data.tsv"
+	print("Saving data to ", outfile_name)	
 	filtered_df.to_csv(outfile_name, sep='\t', index=False)
 
 	return filtered_df
