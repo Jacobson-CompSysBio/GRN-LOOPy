@@ -40,7 +40,7 @@ def get_arguments():
 						help="The total number of leaves allowed in each tree. Recommended set large and fine tune with early stopping on validation")						
 	parser.add_argument("--num_leaves", dest="num_leaves", default  = 31,
 						help="max number of leaves in one tree")						
-	parser.add_argument("--max_depth", dest="max_depth", default  = -1, 
+	parser.add_argument("--max_depth", dest="max_depth", default  = -1, type=int, 
 						help="The allowed max depth of the trees. Default is infinite, but suggested to constrain max tree depth to prevent overfitting") # , ")						
 	parser.add_argument("--random_state", dest="random_state", default = 42)
 	parser.add_argument("--calc_permutation_importance", dest="calc_permutation_importance", action="store_true", 
