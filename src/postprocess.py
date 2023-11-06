@@ -1,3 +1,4 @@
+import pandas as pd
 from utils.file_helpers import read_dataframe
 
 def get_arguments():
@@ -24,6 +25,24 @@ def get_arguments():
 
 	return parser.parse_args()
 
+def parse_importances(importance_data):
+	features = importance_data['features'].split('|')
+	feature_importances = importance_data['feature_imps'].split('|')
+	feature_name = importance_data['feature'] 
+	return pd.DataFrame({
+		'from': features,
+		'to': feature_name,
+		'weight': feature_importances
+	})
+
+def create_edgelist(df: pd.DataFrame): 
+	output_values = df.apply(parse_importances, axis=1)
+	output_edgelist = pd.concat(output_values.values)
+	return output_edgelist.sort_values(by='weight', ascending=False).reset_index(drop=True)
+
+def threshold_edgelist(df: pd.DataFrame, threshold: float):
+	threshold_index = int(threshold * df.shape[0])
+	return df.loc[:threshold_index]	
 
 def main():
 	"""
@@ -45,6 +64,7 @@ def main():
 		# create edgelist from file 
 	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
 
+	
 	# threshold the network 
 	
 
