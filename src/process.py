@@ -1,3 +1,4 @@
+#!/lustre/orion/world-shared/syb111/frontier_hack/hp_gin_gen_env/bin/python
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 import pandas as pd
@@ -79,10 +80,12 @@ def run_mpi_model(feature_name):
 	x_cols = train_df.columns[train_df.columns != feature_name]
 	y_col = feature_name
 
+
+    #TODO:  run w/ salloc/srun to limit the gpus that the process sees. 
 	rank = MPI.COMM_WORLD.Get_rank()
 	node_id = os.environ['SLURM_NODEID']
-	gpus_per_device = 8
-	gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
+	#gpus_per_device = 8
+	gpu_device_id = 0 #rank % gpus_per_device if device == 'gpu' else -1 
 	n_jobs = -1
 
 	#TODO: if model does not use GPUs, ensure to warn user and switch 
