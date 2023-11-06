@@ -55,11 +55,9 @@ class AbstractModel:
         feature_weights = np.ones(x_train.shape[1])
         weight = feature_weights / np.sum(feature_weights)
         for i in range(n_iterations): 
-            print('running iteration ', i)
             self.model.fit(x_train, y_train, feature_weight = weight)
             feature_imps = self.model.feature_importances_
             weight = feature_imps / sum(feature_imps)
-
         stop = time.time()
         print("calc_permutation_score", calc_permutation_score)
         print("calc_permutation_importance", calc_permutation_importance)
@@ -93,7 +91,7 @@ class AbstractModel:
                 test = test,
                 x_cols = x_cols,
                 y_col = y_col,
-				n_iterations = n_iterations,
+		n_iterations = n_iterations,
                 eval_set = eval_set,
                 device = self.device,
                 model_name = self.model_name,
