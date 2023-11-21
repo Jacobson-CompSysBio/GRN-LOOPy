@@ -1,3 +1,4 @@
+#!/lustre/orion/world-shared/syb111/frontier_hack/hp_gin_gen_env/bin/python
 from mpi4py import MPI
 from mpi4py.futures import MPICommExecutor
 import pandas as pd
@@ -6,9 +7,8 @@ import sys
 import random
 import time
 from utils.file_helpers import read_dataframe
-from processing.create_model import create_model
+from processing.create_model import AbstractModel
 from processing.data_helpers import get_train_test_split
-from processing.run_model import run_model
 import argparse
 
 
@@ -27,12 +27,12 @@ def get_arguments():
 						help='specifies the delimiter for the input file.\n Default "\\t"')
 	parser.add_argument('--device', dest='device', action='store', default="cpu",
 						help='the device type you wish to use for training')
-	parser.add_argument('--use_mpi', dest='use_mpi', action='store_true',
-						help='uses mpi scheduler to run data')
 	parser.add_argument('--outfile', dest='outfile', action='store', default='processed_data.tsv',
 						help='the base name for the output files. Default is processed_data.tsv')
 	parser.add_argument("--boosting_type", dest="boosting_type", default  = 'gbdt', 
 						help="gbdt is commong gradient boosted tree. gbdt, rf, dart")
+	parser.add_argument("--model_name", dest="model_name", default  = 'lgbm',
+						help="Objective for model: 'regression', 'mape', etc.")						
 	parser.add_argument("--objective", dest="objective", default  = 'regression',
 						help="Objective for model: 'regression', 'mape', etc.")						
 	parser.add_argument("--learning_rate", dest="learning_rate", default  = 0.1, 
@@ -44,9 +44,17 @@ def get_arguments():
 	parser.add_argument("--max_depth", dest="max_depth", default  = -1, 
 						help="The allowed max depth of the trees. Default is infinite, but suggested to constrain max tree depth to prevent overfitting") # , ")						
 	parser.add_argument("--random_state", dest="random_state", default = 42)
-	
+	parser.add_argument("--calc_permutation_importance", dest="calc_permutation_importance", action="store_true", 
+						help="A flag defining whether or not permutation importance scores will be generated for X features within each model"),
+	parser.add_argument("--calc_permutation_score", dest="calc_permutation_score", action="store_true", 
+						help="A flag defining whether or not an overal permutation test score will be generated for each model"),
+	parser.add_argument("--n_permutations", dest="n_permutations", action="store", type=int, default=1000, 
+						help="The total number of permutations defined for the permutation importance and permutation score."),
 	parser.add_argument("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
-
+	parser.add_argument("--bagging_fraction", dest="bagging_fraction", default=None,
+						help="The total fraction of samples in the training set to be bagged")
+	parser.add_argument("--bagging_freq", dest="bagging_freq", default=1, 
+						help="The frequency to undergo bagging. Default is 1, for every iteration.")
 	return parser.parse_args()
 
 train_df = None
@@ -60,32 +68,50 @@ num_leaves = None # 31, # max number of leaves in one tree
 max_depth = None # -1, # constrain max tree depth to prevent overfitting, 
 verbose= -1 # 1, # -1 = silent, 0 = warn, 1 = info
 random_state= None # 42,
+model_name=None
+calc_permutation_importance = None
+calc_permutation_score = None
+n_permutations = None
+bagging_fraction=None
+bagging_freq=None
+
 
 def run_mpi_model(feature_name):
 	x_cols = train_df.columns[train_df.columns != feature_name]
 	y_col = feature_name
 
+
+    #TODO:  run w/ salloc/srun to limit the gpus that the process sees. 
 	rank = MPI.COMM_WORLD.Get_rank()
 	node_id = os.environ['SLURM_NODEID']
-	gpus_per_device = 8
-	gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
+	#gpus_per_device = 8
+	gpu_device_id = 0 #rank % gpus_per_device if device == 'gpu' else -1 
 	n_jobs = -1
 
-	model = create_model(
-		boosting_type = boosting_type, # 'gbdt'
-		objective = objective, # 'regression', 'mape'
-		learning_rate = learning_rate, # boosting learning rate
-		n_estimators = n_estimators, # set large and fine tune with early stopping on validation
-		num_leaves = num_leaves, # max number of leaves in one tree
-		max_depth = max_depth, # constrain max tree depth to prevent overfitting, 
-		random_state= 42,
-		device = device,
-		gpu_device_id = gpu_device_id, 
-		verbose= verbose # -1 = silent, 0 = warn, 1 = info
+	#TODO: if model does not use GPUs, ensure to warn user and switch 
+	# back to CPU specifications. 
+
+	model = AbstractModel(
+		model_name=model_name,
+		objective=objective,
+		model_type=objective,
+		device=device,
+		gpu_device_id=gpu_device_id,
+		learning_rate = learning_rate,
+		n_estimators=n_estimators,
+		max_depth = max_depth,
+		bagging_fraction = bagging_fraction,
+		bagging_freq = bagging_freq,
+		verbose=-1
 	)
-
-	output = run_model(model, train_df, test_df, x_cols, y_col, eval_set=False, device=device,gpus_per_device=8)
-
+	output = model.fit(train_df,
+		test_df,
+		x_cols,
+		y_col,
+		calc_permutation_importance = calc_permutation_importance,
+		calc_permutation_score = calc_permutation_score,
+		n_permutations = n_permutations)
+	
 	output['rank']= rank
 	output['node_id']= node_id
 	output['gpu_device_id']= gpu_device_id
@@ -97,6 +123,7 @@ def run_mpi_model(feature_name):
 
 
 def main():
+	print("getting arguments")
 	args = get_arguments()
 
 	global train_df
@@ -104,12 +131,18 @@ def main():
 	global device
 	global boosting_type
 	global objective
+	global model_name
 	global learning_rate
 	global n_estimators
 	global num_leaves
 	global max_depth
 	global random_state
 	global device
+	global calc_permutation_importance
+	global calc_permutation_score
+	global n_permutations
+	global bagging_fraction
+	global bagging_freq
 	global verbose
 
 
@@ -126,24 +159,33 @@ def main():
 	num_leaves = args.num_leaves
 	max_depth = args.max_depth
 	random_state = args.random_state
-	device = args.device
+	calc_permutation_importance = args.calc_permutation_importance
+	calc_permutation_score = args.calc_permutation_score
+	n_permutations = args.n_permutations
+	model_name = args.model_name
+	bagging_fraction = args.bagging_fraction
+	bagging_freq = args.bagging_freq
+
 	verbose = args.verbose
 	outfile = args.outfile
 
+	print("Reading Data In")
 	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
 
+	print("Splitting Data")
 	features = df.columns
 	train, test = get_train_test_split(df)
 	train_df = train
 	test_df = test
 
+	print("Distributing Data")
 	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
 		if executor is not None:
 			collected_output = list(executor.map(run_mpi_model, features))
-
 			pd.DataFrame(collected_output).to_csv(outfile)
 			# print(collected_output)
 
+## TODO: We need to factor in the kfold crass validation. Additionally, for data sets too small, a functionality should be implemented for folks to forego the validation step in the train/test split (for astoundingly small rna seq data sets)
 
 if __name__ == '__main__':
 	main()

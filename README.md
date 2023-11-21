@@ -46,7 +46,8 @@ module load cray-mpich/8.1.23
 
 source activate /ccs/home/lanemj/environments/frontier/lightgbm
 
-MPI4PY_RC_RECV_MPROBE=0 srun -n 17  python /ccs/home/lanemj/hp_network_generator/src/process.py\
+export MPI4PY_RC_RECV_MPROBE=0 
+srun -n 16 --gpus-per-task=1 --gpu-bind=closest  python /ccs/home/lanemj/hp_network_generator/src/process.py\
 	--infile /ccs/home/lanemj/DREAM5_SysGenA100_Network1_Expression_100.tsv \
 	--device gpu \
 	--header_row_idx 0 \
