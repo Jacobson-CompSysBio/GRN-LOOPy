@@ -55,6 +55,8 @@ def get_arguments():
 						help="The total fraction of samples in the training set to be bagged")
 	parser.add_argument("--bagging_freq", dest="bagging_freq", default=1, 
 						help="The frequency to undergo bagging. Default is 1, for every iteration.")
+	parser.add_argument("--tune_hyper_parameters", dest="tune_hyper_parameters", action="store_true", 
+						help="engage in hyperparameter tuning for each feature.")
 	return parser.parse_args()
 
 train_df = None
@@ -74,7 +76,42 @@ calc_permutation_score = None
 n_permutations = None
 bagging_fraction=None
 bagging_freq=None
+tune_hyper_parameters = None
 
+def get_model_hyper(): 
+	model_hyper = None
+	model_fixed = None
+	if model_name == 'lgbm': 
+		model_hyper = {
+			'learning_rate': [0.5, 0.1, 0.05],#, 0.001],
+			'min_split_gain': [0, 0.05, 0.1],#, 0.25, 0.5],
+			'min_data_in_leaf': [1, 5, 10]#, 20],
+	 	}
+		model_fixed = {
+			'model_name': 'lgbm',
+			'max_depth': 13,#, 25, 50, 100],
+			'num_leaves': 15,#, 31, 63],#, 127, 255],
+			'objective': 'regression',
+			'device': 'cpu',
+			'verbose': -1, 
+			'early_stopping_round': 15
+		}
+	if model_name == 'rf': 
+		model_hyper = {
+			'n_estimators': [50, 100, 250],
+			'max_depth': [25, 50, 100],#, 1000],
+			'num_leaves': [15, 31, 63],
+			'bagging_fraction': [0.25, 0.5, 0.75]
+ 		}
+		model_fixed = {
+			'model_name': 'rf',
+			'objective': 'regression',
+			'device': 'cpu',
+			'bagging_freq': 1,
+			'verbose': -1,
+			'early_stopping_round': 15
+		}
+	return model_hyper, model_fixed
 
 def run_mpi_model(feature_name):
 	x_cols = train_df.columns[train_df.columns != feature_name]
@@ -90,6 +127,29 @@ def run_mpi_model(feature_name):
 
 	#TODO: if model does not use GPUs, ensure to warn user and switch 
 	# back to CPU specifications. 
+	param_list = None
+	param_list = {
+		"learning_rate": learning_rate,
+		"n_estimators": _estimators,
+		"max_depth": max_depth,
+		"bagging_fraction": bagging_fraction,
+		"bagging_freq": bagging_freq,
+	}
+	if tune_hyper_parameters: 
+		model_hyper, model_fixed = get_model_hyper()
+		param_list = hyperparameter_tune(
+			model_class = AbstractModel,
+			model_hyper = model_hyper,
+			model_fixed = model_fixed,
+			train_hyper = {},
+			train_fixed = {},
+			data = train_df,
+			y_feature= y_col,
+			k_folds= 5,
+			train_size=0.85
+			device=device,
+			verbose= False,
+		)
 
 	model = AbstractModel(
 		model_name=model_name,
@@ -97,12 +157,8 @@ def run_mpi_model(feature_name):
 		model_type=objective,
 		device=device,
 		gpu_device_id=gpu_device_id,
-		learning_rate = learning_rate,
-		n_estimators=n_estimators,
-		max_depth = max_depth,
-		bagging_fraction = bagging_fraction,
-		bagging_freq = bagging_freq,
-		verbose=-1
+		verbose=-1,
+		**param_list
 	)
 	output = model.fit(train_df,
 		test_df,
@@ -143,6 +199,7 @@ def main():
 	global n_permutations
 	global bagging_fraction
 	global bagging_freq
+	global tune_hyper_parameters
 	global verbose
 
 
@@ -165,6 +222,7 @@ def main():
 	model_name = args.model_name
 	bagging_fraction = args.bagging_fraction
 	bagging_freq = args.bagging_freq
+	tune_hyper_parameters = args.tune_hyper_parameters
 
 	verbose = args.verbose
 	outfile = args.outfile

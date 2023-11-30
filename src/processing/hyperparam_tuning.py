@@ -12,6 +12,7 @@ def hyperparameter_tune(
     y_feature: str,
     k_folds: int,
     train_size: float = 0.85,
+	device: str,
     verbose: bool = True,
     ):
     '''
