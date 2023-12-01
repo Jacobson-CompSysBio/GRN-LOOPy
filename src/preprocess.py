@@ -14,7 +14,7 @@ def get_arguments():
 	parser.add_argument('--infile', type=str, dest='infile', required=True,
 						help='the base input file dataframe')
 	parser.add_argument('--has_indices', dest='has_indices', action='store_true',
-					   help='signifies that dataset does not have indices')
+					   help='signifies that dataset has indices')
 	parser.add_argument('--corr_thresh', dest='corr_thresh', action='store', default=0.95,
 						help='the threshold at which to cut off values. Default 0.95')
 	parser.add_argument('--save_corr', dest='save_corr', action='store_true',

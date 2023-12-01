@@ -7,6 +7,7 @@ from sklearn.svm import SVR
 from xicor import xicor
 import time
 
+
 def create_lgb_model(
     boosting_type = 'gbdt', # 'gbdt'
     objective = 'regression', # 'regression', 'mape'
@@ -47,17 +48,30 @@ class AbstractModel:
     model_name = None
     objective = None
     model = None
+    device = None
 
+    train_time = None
+    r2 = None
+    feature_imps = None
+    features = None
+    n_permutations = None
+    p_value = None
+    permutation_importance = None
+    eval_set = None
+
+    best_iteration = None
+    best_score = None
+    
     def __init__(self, model_name: str, objective: str, **kwargs):
         self.model_name = model_name
         self.objective = objective
         self.device = kwargs['device']
         self.define_model(**kwargs)
-
     def define_model(self, **kwargs):
         if self.model_name == 'lgbm': 
             self.model = create_lgb_model(
                 boosting_type = 'gbdt',
+                objective = self.objective,
                 **kwargs
             )
         if self.model_name == 'rf':
@@ -67,9 +81,9 @@ class AbstractModel:
             ##  bagging_fraction=0.6, 
             self.model = create_lgb_model(
                 boosting_type = 'rf',
+                objective = self.objective,
                 **kwargs
             )
-
         if self.model_name == 'dart':
             ## ABSOLUTELY MUST DEFINE bagging_freq and
             ## bagging_frac. 
@@ -77,25 +91,23 @@ class AbstractModel:
             ##  bagging_fraction=0.6, 
             self.model = create_lgb_model(
                 boosting_type = 'dart',
+                objective = self.objective,
                 **kwargs
             )
-
         if self.model_name == 'svr':
             self.model = SVR()
-
         if self.model_name == 'pearson':
             self.model = stats.pearsonr
         if self.model_name == 'spearman': 
             self.model = stats.spearmanr
         if self.model_name == 'xicor': 
             self.model = xicor.Xi
-    
-    def run_correlation_modeling(self, data, x_cols, y_col, objective): 
+    def run_correlation_modeling(self, data, x_cols, y_col): 
         correlation_scores = np.zeros(len(x_cols))
         start = time.time()
         for col_idx in range(len(x_cols)):
             out = self.model(data[x_cols[col_idx]],data[y_col])
-            if objective == 'xicor': 
+            if self.model_name == 'xicor': 
                 correlation_scores[col_idx] = out.correlation
             else: 
                 correlation_scores[col_idx] = out[0]
@@ -106,45 +118,55 @@ class AbstractModel:
             "features": "|".join(map(lambda x: f"{x}", x_cols)),
             "feature_cors": "|".join(map(lambda x: f"{x}", correlation_scores))
         }
-    
     def run_rf_model(self, train, test, x_cols, y_col, eval_set=False, device='cpu', model_name = "lgbm", calc_permutation_importance = False, calc_permutation_score=False, n_permutations=1000):
         x_train = train[x_cols]
         y_train = train[y_col]
         x_test = test[x_cols]
         y_test = test[y_col]
-    
         start = time.time()
         if eval_set:
-            self.model.fit(x_train, y_train, eval_set=(x_test, y_test))
+            callbacks = [log_evaluation(-1)]
+            self.model.fit(x_train, y_train, eval_set=(x_test, y_test), callbacks=callbacks )
         else:
             self.model.fit(x_train, y_train)
         stop = time.time()
-    
-    
-        
-    
         feature_importances = None if model_name == 'svr' else "|".join(
             map(lambda x: f"{x}", self.model.feature_importances_))
+        permutation_test_start = None if not calc_permutation_score else time.time()
         perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
             self.model, x_train, y_train, n_permutations=n_permutations)[2] # 3rd value is the p_value
+        permutation_test__stop = None if not calc_permutation_score else time.time()
+        permutation_importance_start = None if not calc_permutation_score else time.time()
         permutation_importances = None if not calc_permutation_importance else "|".join(
             map(lambda x: f"{x}", permutation_importance(self.model, x_train, y_train, n_repeats=n_permutations).importances_mean )
         )
-    
+        permutation_importance_stop = None if not calc_permutation_score else time.time()
+        
+        self.train_time = stop - start
+        self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
+        self.feature_imps = feature_importances
+        self.features = '|'.join(map(lambda x: f"{x}", x_cols))
+        self.n_permutations = n_permutations
+        self.p_value = perm_test_results_p_val
+        self.permutation_importance = permutation_importances
+        self.eval_set = eval_set
+        
+        best_score, best_iteration = self.evaluate()
+        self.best_iteration = best_iteration
+        self.best_score = best_score
+        
+        
         return {
-            'device': device,
-            'train_time': stop - start,
-            'r2': None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
-            'feature_imps': feature_importances,
-            'features': '|'.join(map(lambda x: f"{x}", x_cols)),
-            'n_permutations': n_permutations,
-            'p_value': perm_test_results_p_val,
-            'permutation_importance': permutation_importances,
-            'eval_set': eval_set
+            'device': self.device,
+            'train_time': self.train_time,
+            'r2': self.r2,
+            'feature_imps': self.feature_imps,
+            'features': self.features,
+            'n_permutations': self.n_permutations,
+            'p_value': self.p_value,
+            'permutation_importance': self.permutation_importance,
+            'eval_set': self.eval_set
         }
-
-
-    
     def fit(self, train, test, x_cols, y_col, eval_set=None,  calc_permutation_importance = False, calc_permutation_score = False, n_permutations = 1000):
         return_data = None
         if self.objective != 'correlation': 
@@ -167,5 +189,11 @@ class AbstractModel:
                 y_col,
                 self.model_name
             )   
-
         return return_data
+    def evaluate(self):
+        if self.model_name == 'svr': 
+            return self.r2, None
+        score_idx = np.argmin(self.model.evals_result_['valid_0']['l2'])
+        
+        return self.model.evals_result_['valid_0']['l2'][score_idx], score_idx
+        
