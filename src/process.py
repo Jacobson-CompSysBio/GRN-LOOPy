@@ -130,7 +130,7 @@ def run_mpi_model(feature_name):
 	param_list = None
 	param_list = {
 		"learning_rate": learning_rate,
-		"n_estimators": _estimators,
+		"n_estimators": n_estimators,
 		"max_depth": max_depth,
 		"bagging_fraction": bagging_fraction,
 		"bagging_freq": bagging_freq,
