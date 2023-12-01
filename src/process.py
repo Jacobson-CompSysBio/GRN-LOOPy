@@ -85,7 +85,7 @@ def get_model_hyper():
 		model_hyper = {
 			'learning_rate': [0.5, 0.1, 0.05],#, 0.001],
 			'min_split_gain': [0, 0.05, 0.1],#, 0.25, 0.5],
-			'min_data_in_leaf': [1, 5, 10]#, 20],
+			'min_data_in_leaf': [1, 5, 10] #, 20],
 	 	}
 		model_fixed = {
 			'model_name': 'lgbm',
@@ -146,7 +146,7 @@ def run_mpi_model(feature_name):
 			data = train_df,
 			y_feature= y_col,
 			k_folds= 5,
-			train_size=0.85
+			train_size=0.85,
 			device=device,
 			verbose= False,
 		)
