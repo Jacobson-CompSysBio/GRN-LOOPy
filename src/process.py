@@ -111,7 +111,6 @@ def get_model_hyper():
 			'model_name': 'rf',
 			'objective': objective,
 			'device': device,
-			'bagging_freq': 1,
 			'verbose': -1,
 			'early_stopping_round': 15
 		}
