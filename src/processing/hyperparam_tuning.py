@@ -103,49 +103,60 @@ def hyperparameter_tune(
     train_h_lens = [len(h) for h in train_h_vals]
     n_combinations = np.prod(model_h_lens + train_h_lens)
     # initialize list to store model scores
-    model_list, score_list = [], []
+    model_list, score_list = {}, {}
     # loop over hyperparameter combinations
     loop = tqdm(range(n_combinations)) if verbose else range(n_combinations)
     for i in loop:
-        # unravel hyperparameter values
-        indices = np.unravel_index(i, model_h_lens + train_h_lens)
-        model_hyper_i = {k: v[i] for k, v, i in zip(
-            model_h_keys, 
-            model_h_vals, 
-            indices[:len(model_h_keys)])}
-        train_hyper_i = {k: v[i] for k, v, i in zip(
-            train_h_keys, 
-            train_h_vals, 
-            indices[len(model_h_keys):])}
-        # fit models on train/val sets a nd store scores
-        models, scores = [], []
-        for t_idx, v_idx in zip(train_indices, val_indices):
-            # initialize model with hyperparameter combination
-            model = model_class(**model_hyper_i, **model_fixed)
-            # fit model on train/val set
-            model_output = model.fit(
-                train=data.iloc[t_idx],
-                test = data.iloc[v_idx],
-                x_cols=x_cols, 
-                y_col= y_col,
-                eval_set= True if model_fixed['model_name'] in ['lgbm', 'dart', 'rf'] else False,
-                # **train_hyper_i,
-                # **train_fixed,
-            )
-            # evaluate model on val set
-            # IF model is lgbm, rf, or dart, the score ought to be minimized,
-            # IF using R2, score ought to be maximized :/ 
-            # Not ideal.... need a better method of optimization.
-            score = model.best_score
-            # store model and score for train/val set
-            models.append(model)
-            scores.append(score)
-        # store scores for hyperparameter combination
-        model_list.append(models)
-        score_list.append(scores)
+        model_hyper_i = None
+        train_hyper_i = None
+        try: 
+            # unravel hyperparameter values
+            indices = np.unravel_index(i, model_h_lens + train_h_lens)
+            model_hyper_i = {k: v[i] for k, v, i in zip(
+                model_h_keys, 
+                model_h_vals, 
+                indices[:len(model_h_keys)])}
+            train_hyper_i = {k: v[i] for k, v, i in zip(
+                train_h_keys, 
+                train_h_vals, 
+                indices[len(model_h_keys):])}
+            # fit models on train/val sets a nd store scores
+            models, scores = [], []
+            for t_idx, v_idx in zip(train_indices, val_indices):
+                # initialize model with hyperparameter combination
+                model = model_class(**model_hyper_i, **model_fixed)
+                # fit model on train/val set
+                model_output = model.fit(
+                    train=data.iloc[t_idx],
+                    test = data.iloc[v_idx],
+                    x_cols=x_cols, 
+                    y_col= y_col,
+                    eval_set= True if model_fixed['model_name'] in ['lgbm', 'dart', 'rf'] else False,
+                    # **train_hyper_i,
+                    # **train_fixed,
+                )
+                # evaluate model on val set
+                # IF model is lgbm, rf, or dart, the score ought to be minimized,
+                # IF using R2, score ought to be maximized :/ 
+                # Not ideal.... need a better method of optimization.
+                score = model.best_score
+                # store model and score for train/val set
+                models.append(model)
+                scores.append(score)
+            # store scores for hyperparameter combination
+            model_list[i] = models
+            score_list[i] = scores
+        except Exception as ex: 
+            print("EXCEPTION in Hyperparam Tuning:")
+            print("Train Hyper", train_hyper_i)
+            print("Model Hyper", model_hyper_i)
+            # print("Exception", ex)
+            model_list[i] = np.nan
+            score_list[i] = np.nan
+            
     # compute weighted scores for each hyperparameter combination
     eval_matrix = np.zeros(model_h_lens + train_h_lens)
-    for i, scores in enumerate(score_list):
+    for i, scores in zip(score_list.keys(), score_list.values()):
         indices = np.unravel_index(i, model_h_lens + train_h_lens)
         eval_matrix[indices] = np.average(scores)#, weights=weights)
     # get best hyperparameters
