@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+import numpy as np
+
 
 def hyperparameter_tune(
     model_class,
@@ -81,7 +84,7 @@ def hyperparameter_tune(
     if model_fixed['model_name'] in ['pearson', 'spearman', 'xicor']: 
         print(f"Correlation models require no parameter tuning")
         return
-    n_samples = df.shape[0]
+    n_samples = data.shape[0]
     train_indices = []
     val_indices = []
     for i in range(k_folds): 
@@ -121,8 +124,8 @@ def hyperparameter_tune(
             model = model_class(**model_hyper_i, **model_fixed)
             # fit model on train/val set
             model_output = model.fit(
-                train=data.loc[t_idx],
-                test = data.loc[v_idx],
+                train=data.iloc[t_idx],
+                test = data.iloc[v_idx],
                 x_cols=x_cols, 
                 y_col= y_col,
                 eval_set= True if model_fixed['model_name'] in ['lgbm', 'dart', 'rf'] else False,
@@ -157,7 +160,6 @@ def hyperparameter_tune(
         train_h_vals,
         indices[len(model_h_keys):])}
     # print results
-
     if verbose:
         print()
         print('best model parameters:')

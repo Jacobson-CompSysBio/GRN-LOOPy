@@ -26,7 +26,7 @@ def get_arguments():
 						help='signifies a header row index for the input file.\ndefault=None\nrows are 0 indexed.')
 	parser.add_argument('--delim', dest='delim', action='store', default='\t',
 						help='specifies the delimiter for the input file.\n Default "\\t"')
-	parser.add_argument('--device', dest='device', action='store', default="cpu",
+	parser.add_argument('--device', dest='device', action='store', default="gpu",
 						help='the device type you wish to use for training')
 	parser.add_argument('--outfile', dest='outfile', action='store', default='processed_data.tsv',
 						help='the base name for the output files. Default is processed_data.tsv')
@@ -84,30 +84,33 @@ def get_model_hyper():
 	model_fixed = None
 	if model_name == 'lgbm': 
 		model_hyper = {
-			'learning_rate': [0.5, 0.1, 0.05],#, 0.001],
-			'min_split_gain': [0, 0.05, 0.1],#, 0.25, 0.5],
-			'min_data_in_leaf': [1, 5, 10] #, 20],
+			'learning_rate': [0.5,0.1,0.05],#, 0.001],
+			'min_split_gain': [0.1, 0.25],#, 0.5],
+			'min_data_in_leaf': [5, 10],
+			'max_depth': [13, 25],
+			'num_leaves':[15, 31] #, 20],
 	 	}
 		model_fixed = {
 			'model_name': 'lgbm',
-			'max_depth': 13,#, 25, 50, 100],
-			'num_leaves': 15,#, 31, 63],#, 127, 255],
-			'objective': 'regression',
-			'device': 'cpu',
+			#'max_depth': 13,#, 25, 50, 100],
+			#'num_leaves': 15,#, 31, 63],#, 127, 255],
+			'objective': objective,
+			'device': device,
 			'verbose': -1, 
 			'early_stopping_round': 15
 		}
 	if model_name == 'rf': 
 		model_hyper = {
-			'n_estimators': [50, 100, 250],
+			'n_estimators': [50, 100],#, 250],
 			'max_depth': [25, 50, 100],#, 1000],
-			'num_leaves': [15, 31, 63],
-			'bagging_fraction': [0.25, 0.5, 0.75]
+			'num_leaves': [15, 31],#, 63],
+			'bagging_fraction': [0.25, 0.5, 0.75],
+			'baggin_freq': [0.5, 0.95]
  		}
 		model_fixed = {
 			'model_name': 'rf',
-			'objective': 'regression',
-			'device': 'cpu',
+			'objective': objective,
+			'device': device,
 			'bagging_freq': 1,
 			'verbose': -1,
 			'early_stopping_round': 15
@@ -151,7 +154,6 @@ def run_mpi_model(feature_name):
 			device=device,
 			verbose= False,
 		)
-
 	model = AbstractModel(
 		model_name=model_name,
 		objective=objective,
@@ -159,7 +161,7 @@ def run_mpi_model(feature_name):
 		device=device,
 		gpu_device_id=gpu_device_id,
 		verbose=-1,
-		**param_list
+		**param_list[0]
 	)
 	output = model.fit(train_df,
 		test_df,
@@ -167,8 +169,8 @@ def run_mpi_model(feature_name):
 		y_col,
 		calc_permutation_importance = calc_permutation_importance,
 		calc_permutation_score = calc_permutation_score,
-		n_permutations = n_permutations)
-	
+		n_permutations = n_permutations,
+		eval_set=True)
 	output['rank']= rank
 	output['node_id']= node_id
 	output['gpu_device_id']= gpu_device_id
@@ -233,7 +235,7 @@ def main():
 
 	print("Splitting Data")
 	features = df.columns
-	train, test = get_train_test_split(df)
+	train, test = get_train_test_split(df, train_size=0.85)
 	train_df = train
 	test_df = test
 

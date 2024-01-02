@@ -6,7 +6,8 @@ from sklearn import metrics
 from sklearn.svm import SVR
 from xicor import xicor
 import time
-
+from lightgbm import log_evaluation
+import numpy as np
 
 def create_lgb_model(
     boosting_type = 'gbdt', # 'gbdt'
@@ -49,7 +50,6 @@ class AbstractModel:
     objective = None
     model = None
     device = None
-
     train_time = None
     r2 = None
     feature_imps = None
@@ -130,8 +130,13 @@ class AbstractModel:
         else:
             self.model.fit(x_train, y_train)
         stop = time.time()
+        
+        #feature_imp_df = None if model_name == 'svr' else pd.DataFrame({"imps": self.model.feature_importances_, "features": x_cols})
+        #feature_imp_df = None if model_name == 'svr' else feature_imp_df[ feature_imp_df['imps'] >0 ]
+        
+
         feature_importances = None if model_name == 'svr' else "|".join(
-            map(lambda x: f"{x}", self.model.feature_importances_))
+            map(lambda x: f"{x}", self.model.feature_importances_)) #feature_imp_df['imps'].values))
         permutation_test_start = None if not calc_permutation_score else time.time()
         perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
             self.model, x_train, y_train, n_permutations=n_permutations)[2] # 3rd value is the p_value
@@ -143,9 +148,9 @@ class AbstractModel:
         permutation_importance_stop = None if not calc_permutation_score else time.time()
         
         self.train_time = stop - start
-        self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
+        self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test )
         self.feature_imps = feature_importances
-        self.features = '|'.join(map(lambda x: f"{x}", x_cols))
+        self.features = '|'.join(map(lambda x: f"{x}", x_cols))#feature_imp_df['features'].values))
         self.n_permutations = n_permutations
         self.p_value = perm_test_results_p_val
         self.permutation_importance = permutation_importances
@@ -154,7 +159,6 @@ class AbstractModel:
         best_score, best_iteration = self.evaluate()
         self.best_iteration = best_iteration
         self.best_score = best_score
-        
         
         return {
             'device': self.device,
