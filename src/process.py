@@ -54,7 +54,7 @@ def get_arguments():
 	parser.add_argument("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
 	parser.add_argument("--bagging_fraction", dest="bagging_fraction", default=None,
 						help="The total fraction of samples in the training set to be bagged")
-	parser.add_argument("--bagging_freq", dest="bagging_freq", default=1, 
+	parser.add_argument("--bagging_freq", dest="bagging_freq", default=None, 
 						help="The frequency to undergo bagging. Default is 1, for every iteration.")
 	parser.add_argument("--tune_hyper_parameters", dest="tune_hyper_parameters", action="store_true", 
 						help="engage in hyperparameter tuning for each feature.")
@@ -84,11 +84,12 @@ def get_model_hyper():
 	model_fixed = None
 	if model_name == 'lgbm': 
 		model_hyper = {
-			'learning_rate': [0.5,0.1,0.05],#, 0.001],
+			'learning_rate': [0.001, 0.5,0.1],#, 0.001],
 			'min_split_gain': [0.1, 0.25],#, 0.5],
-			'min_data_in_leaf': [5, 10],
-			'max_depth': [13, 25],
-			'num_leaves':[15, 31] #, 20],
+			#'min_data_in_leaf': [5, 10],
+			'max_depth': [14, 25]
+
+			#'num_leaves':[15, 31] #, 20],
 	 	}
 		model_fixed = {
 			'model_name': 'lgbm',
@@ -104,23 +105,21 @@ def get_model_hyper():
 			'n_estimators': [50, 100],#, 250],
 			'max_depth': [25, 50, 100],#, 1000],
 			'num_leaves': [15, 31],#, 63],
-			'bagging_fraction': [0.25, 0.5, 0.75],
-			'baggin_freq': [0.5, 0.95]
+			#'bagging_fraction': [0.25, 0.5, 0.75],
+			#'baggin_freq': [0.5, 0.95]
  		}
 		model_fixed = {
 			'model_name': 'rf',
 			'objective': objective,
 			'device': device,
 			'verbose': -1,
-			'early_stopping_round': 15
+			'early_stopping_round': 15,
 		}
 	return model_hyper, model_fixed
 
 def run_mpi_model(feature_name):
 	x_cols = train_df.columns[train_df.columns != feature_name]
 	y_col = feature_name
-
-
     #TODO:  run w/ salloc/srun to limit the gpus that the process sees. 
 	rank = MPI.COMM_WORLD.Get_rank()
 	node_id = os.environ['SLURM_NODEID']
@@ -134,9 +133,7 @@ def run_mpi_model(feature_name):
 	param_list = {
 		"learning_rate": learning_rate,
 		"n_estimators": n_estimators,
-		"max_depth": max_depth,
-		"bagging_fraction": bagging_fraction,
-		"bagging_freq": bagging_freq,
+		#"max_depth": max_depth
 	}
 	if tune_hyper_parameters: 
 		model_hyper, model_fixed = get_model_hyper()
@@ -152,7 +149,7 @@ def run_mpi_model(feature_name):
 			train_size=0.85,
 			device=device,
 			verbose= False,
-		)
+		)[0]
 	model = AbstractModel(
 		model_name=model_name,
 		objective=objective,
@@ -160,22 +157,28 @@ def run_mpi_model(feature_name):
 		device=device,
 		gpu_device_id=gpu_device_id,
 		verbose=-1,
-		**param_list[0]
+		**param_list
 	)
-	output = model.fit(train_df,
-		test_df,
-		x_cols,
-		y_col,
-		calc_permutation_importance = calc_permutation_importance,
-		calc_permutation_score = calc_permutation_score,
-		n_permutations = n_permutations,
-		eval_set=True)
-	output['rank']= rank
-	output['node_id']= node_id
-	output['gpu_device_id']= gpu_device_id
-	output['n_jobs']= n_jobs
-	output['feature'] = feature_name
-
+	print("fitting model")
+	output=None
+	try:
+		output = model.fit(train_df,
+			test_df,
+			x_cols,
+			y_col,
+			calc_permutation_importance = calc_permutation_importance,
+			calc_permutation_score = calc_permutation_score,
+			n_permutations = n_permutations,
+			eval_set=True)
+		output['rank']= rank
+		output['node_id']= node_id
+		output['gpu_device_id']= gpu_device_id
+		output['n_jobs']= n_jobs
+		output['feature'] = feature_name
+	except Exception as ex: 
+		print("SELF FEATURE FRACTION", model.model.feature_fraction)
+		print("Failed to fit", y_col)
+		print(ex)
 	return output
 
 
@@ -229,10 +232,10 @@ def main():
 	verbose = args.verbose
 	outfile = args.outfile
 
-	print("Reading Data In")
+	print("Reading Data In", flush=True)
 	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
 
-	print("Splitting Data")
+	print("Splitting Data", flush=True)
 	features = df.columns
 	train, test = get_train_test_split(df, train_size=0.85)
 	train_df = train
@@ -248,4 +251,4 @@ def main():
 ## TODO: We need to factor in the kfold crass validation. Additionally, for data sets too small, a functionality should be implemented for folks to forego the validation step in the train/test split (for astoundingly small rna seq data sets)
 
 if __name__ == '__main__':
-	main()
+features = df.columns	main()

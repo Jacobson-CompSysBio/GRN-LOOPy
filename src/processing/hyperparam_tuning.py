@@ -150,7 +150,8 @@ def hyperparameter_tune(
             print("EXCEPTION in Hyperparam Tuning:")
             print("Train Hyper", train_hyper_i)
             print("Model Hyper", model_hyper_i)
-            # print("Exception", ex)
+            print("y_col", y_col)
+            #print("Exception", ex)
             model_list[i] = np.nan
             score_list[i] = np.nan
             
