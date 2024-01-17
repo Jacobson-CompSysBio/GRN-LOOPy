@@ -137,6 +137,7 @@ def run_mpi_model(feature_name):
 		"bagging_freq": bagging_freq,
 	}
 	if tune_hyper_parameters: 
+		print("hyperparam tuning")
 		model_hyper, model_fixed = get_model_hyper()
 		param_list = hyperparameter_tune(
 			model_class = AbstractModel,
@@ -151,7 +152,7 @@ def run_mpi_model(feature_name):
 			device=device,
 			verbose= False,
 		)
-
+	print("Creating abstract model")
 	model = AbstractModel(
 		model_name=model_name,
 		objective=objective,
@@ -159,7 +160,7 @@ def run_mpi_model(feature_name):
 		device=device,
 		gpu_device_id=gpu_device_id,
 		verbose=-1,
-		**param_list
+		**param_list[0]
 	)
 	output = model.fit(train_df,
 		test_df,
@@ -167,7 +168,8 @@ def run_mpi_model(feature_name):
 		y_col,
 		calc_permutation_importance = calc_permutation_importance,
 		calc_permutation_score = calc_permutation_score,
-		n_permutations = n_permutations)
+		n_permutations = n_permutations,
+		eval_set=True)
 	
 	output['rank']= rank
 	output['node_id']= node_id

@@ -6,7 +6,8 @@ from sklearn import metrics
 from sklearn.svm import SVR
 from xicor import xicor
 import time
-
+from lightgbm import log_evaluation
+import numpy as np
 
 def create_lgb_model(
     boosting_type = 'gbdt', # 'gbdt'
@@ -193,6 +194,7 @@ class AbstractModel:
     def evaluate(self):
         if self.model_name == 'svr': 
             return self.r2, None
+        print('MODEL?', self.model.evals_result_)
         score_idx = np.argmin(self.model.evals_result_['valid_0']['l2'])
         
         return self.model.evals_result_['valid_0']['l2'][score_idx], score_idx

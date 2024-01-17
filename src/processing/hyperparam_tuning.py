@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+
 
 def hyperparameter_tune(
     model_class,
@@ -81,7 +83,7 @@ def hyperparameter_tune(
     if model_fixed['model_name'] in ['pearson', 'spearman', 'xicor']: 
         print(f"Correlation models require no parameter tuning")
         return
-    n_samples = df.shape[0]
+    n_samples = data.shape[0]
     train_indices = []
     val_indices = []
     for i in range(k_folds): 
@@ -90,6 +92,7 @@ def hyperparameter_tune(
         val_indices.append(val)    
     x_cols = data.columns[ data.columns != y_feature ] 
     y_col = y_feature
+    print("unpacking hyper params")
     # unpack hyperparameters
     model_h_keys = list(model_hyper.keys())
     model_h_vals = list(model_hyper.values())
@@ -101,6 +104,7 @@ def hyperparameter_tune(
     n_combinations = np.prod(model_h_lens + train_h_lens)
     # initialize list to store model scores
     model_list, score_list = [], []
+    print("looping")
     # loop over hyperparameter combinations
     loop = tqdm(range(n_combinations)) if verbose else range(n_combinations)
     for i in loop:
@@ -121,8 +125,8 @@ def hyperparameter_tune(
             model = model_class(**model_hyper_i, **model_fixed)
             # fit model on train/val set
             model_output = model.fit(
-                train=data.loc[t_idx],
-                test = data.loc[v_idx],
+                train=data.iloc[t_idx],
+                test = data.iloc[v_idx],
                 x_cols=x_cols, 
                 y_col= y_col,
                 eval_set= True if model_fixed['model_name'] in ['lgbm', 'dart', 'rf'] else False,
