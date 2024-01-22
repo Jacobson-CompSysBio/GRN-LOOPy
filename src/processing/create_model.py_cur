@@ -50,7 +50,6 @@ class AbstractModel:
     objective = None
     model = None
     device = None
-
     train_time = None
     r2 = None
     feature_imps = None
@@ -59,10 +58,8 @@ class AbstractModel:
     p_value = None
     permutation_importance = None
     eval_set = None
-
     best_iteration = None
     best_score = None
-    
     def __init__(self, model_name: str, objective: str, **kwargs):
         self.model_name = model_name
         self.objective = objective
@@ -122,19 +119,25 @@ class AbstractModel:
     def run_rf_model(self, train, test, x_cols, y_col, eval_set=False, device='cpu', model_name = "lgbm", calc_permutation_importance = False, calc_permutation_score=False, n_permutations=1000):
         x_train = train[x_cols]
         y_train = train[y_col]
-        x_test = test[x_cols]
-        y_test = test[y_col]
         start = time.time()
         if eval_set:
+            x_test = test[x_cols]
+            y_test = test[y_col]
             callbacks = [log_evaluation(-1)]
             self.model.fit(x_train, y_train, eval_set=(x_test, y_test), callbacks=callbacks )
         else:
             self.model.fit(x_train, y_train)
         stop = time.time()
-        feature_mask = np.arange(len(x_cols)) if model_name == 'svr' else np.argwhere(self.model.feature_importances_ > 0)
-        feature_importances = None if model_name == 'svr' else "|".join(
-            map(lambda x: f"{x}", np.array(self.model.feature_importances_)[feature_mask].reshape(-1)))
-        feature_names = np.array(x_cols)[feature_mask].reshape(-1)
+        print("feature imp", self.model.feature_importances_)
+        feature_imp_df = None if model_name == 'svr' else pd.DataFrame({"imps": self.model.feature_importances_, "features": x_cols})
+        #feature_imp_df = None if model_name == 'svr' else feature_imp_df[ feature_imp_df['imps'] >0 ]
+        print("feature_imp_df", feature_imp_df.head())
+        feature_importances = None if feature_imp_df is None else "|".join(feature_imp_df[ feature_imp_df['imps'] != 0 ]['imps'].astype('str').values)
+        print("getting feature names")
+        feature_names = None if feature_imp_df is None else "|".join(feature_imp_df[ feature_imp_df['imps'] != 0 ]['features'].values)
+        # feature_importances = None if model_name == 'svr' else "|".join(
+        #     map(lambda x: f"{x}", self.model.feature_importances_)) #feature_imp_df['imps'].values))
+        print("permutation_imp")
         permutation_test_start = None if not calc_permutation_score else time.time()
         perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
             self.model, x_train, y_train, n_permutations=n_permutations)[2] # 3rd value is the p_value
@@ -144,21 +147,17 @@ class AbstractModel:
             map(lambda x: f"{x}", permutation_importance(self.model, x_train, y_train, n_repeats=n_permutations).importances_mean )
         )
         permutation_importance_stop = None if not calc_permutation_score else time.time()
-        
         self.train_time = stop - start
         self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test )
         self.feature_imps = feature_importances
-        self.features = '|'.join(map(lambda x: f"{x}", feature_names))
+        self.features = feature_names # '|'.join(map(lambda x: f"{x}", x_cols))#feature_imp_df['features'].values))
         self.n_permutations = n_permutations
         self.p_value = perm_test_results_p_val
         self.permutation_importance = permutation_importances
         self.eval_set = eval_set
-        
         best_score, best_iteration = self.evaluate()
         self.best_iteration = best_iteration
         self.best_score = best_score
-        
-        
         return {
             'device': self.device,
             'train_time': self.train_time,
@@ -197,6 +196,5 @@ class AbstractModel:
         if self.model_name == 'svr': 
             return self.r2, None
         score_idx = np.argmin(self.model.evals_result_['valid_0']['l2'])
-        
         return self.model.evals_result_['valid_0']['l2'][score_idx], score_idx
         

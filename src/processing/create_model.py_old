@@ -131,10 +131,8 @@ class AbstractModel:
         else:
             self.model.fit(x_train, y_train)
         stop = time.time()
-        feature_mask = np.arange(len(x_cols)) if model_name == 'svr' else np.argwhere(self.model.feature_importances_ > 0)
         feature_importances = None if model_name == 'svr' else "|".join(
-            map(lambda x: f"{x}", np.array(self.model.feature_importances_)[feature_mask].reshape(-1)))
-        feature_names = np.array(x_cols)[feature_mask].reshape(-1)
+            map(lambda x: f"{x}", self.model.feature_importances_))
         permutation_test_start = None if not calc_permutation_score else time.time()
         perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
             self.model, x_train, y_train, n_permutations=n_permutations)[2] # 3rd value is the p_value
@@ -146,9 +144,9 @@ class AbstractModel:
         permutation_importance_stop = None if not calc_permutation_score else time.time()
         
         self.train_time = stop - start
-        self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test )
+        self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
         self.feature_imps = feature_importances
-        self.features = '|'.join(map(lambda x: f"{x}", feature_names))
+        self.features = '|'.join(map(lambda x: f"{x}", x_cols))
         self.n_permutations = n_permutations
         self.p_value = perm_test_results_p_val
         self.permutation_importance = permutation_importances
@@ -196,6 +194,7 @@ class AbstractModel:
     def evaluate(self):
         if self.model_name == 'svr': 
             return self.r2, None
+        print('MODEL?', self.model.evals_result_)
         score_idx = np.argmin(self.model.evals_result_['valid_0']['l2'])
         
         return self.model.evals_result_['valid_0']['l2'][score_idx], score_idx

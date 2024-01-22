@@ -1,0 +1,41 @@
+52a53
+> 
+60a62
+> 
+62a65
+>     
+121a125,126
+>         x_test = test[x_cols]
+>         y_test = test[y_col]
+124,125d128
+<             x_test = test[x_cols]
+<             y_test = test[y_col]
+131,136c134,135
+<         feature_imp_df = None if model_name == 'svr' else pd.DataFrame({"imps": self.model.feature_importances_, "features": x_cols})
+<         #feature_imp_df = None if model_name == 'svr' else feature_imp_df[ feature_imp_df['imps'] >0 ]
+<         feature_importances = None if feature_imp_df is None else "|".join(feature_imp_df[ feature_imp_df['imps'] != 0 ]['imps'].astype('str').values)
+<         feature_names = None if feature_imp_df is None else "|".join(feature_imp_df[ feature_imp_df['imps'] != 0 ]['features'].values)
+<         # feature_importances = None if model_name == 'svr' else "|".join(
+<         #     map(lambda x: f"{x}", self.model.feature_importances_)) #feature_imp_df['imps'].values))
+---
+>         feature_importances = None if model_name == 'svr' else "|".join(
+>             map(lambda x: f"{x}", self.model.feature_importances_))
+145a145
+>         
+147c147
+<         self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test )
+---
+>         self.r2 =  None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
+149c149
+<         self.features = feature_names # '|'.join(map(lambda x: f"{x}", x_cols))#feature_imp_df['features'].values))
+---
+>         self.features = '|'.join(map(lambda x: f"{x}", x_cols))
+153a154
+>         
+156a158,159
+>         
+>         
+193a197
+>         print('MODEL?', self.model.evals_result_)
+194a199
+>         

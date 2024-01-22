@@ -52,12 +52,15 @@ def get_arguments():
 	parser.add_argument("--n_permutations", dest="n_permutations", action="store", type=int, default=1000, 
 						help="The total number of permutations defined for the permutation importance and permutation score."),
 	parser.add_argument("--verbose", dest="verbose", default = 1, help=' -1 = silent, 0 = warn, 1 = info')						
-	parser.add_argument("--bagging_fraction", dest="bagging_fraction", default=None,
+	parser.add_argument("--bagging_fraction", dest="bagging_fraction", default=1.0, type=float,
 						help="The total fraction of samples in the training set to be bagged")
-	parser.add_argument("--bagging_freq", dest="bagging_freq", default=1, 
-						help="The frequency to undergo bagging. Default is 1, for every iteration.")
+	parser.add_argument("--bagging_freq", dest="bagging_freq", default=0, type=int, 
+						help="The frequency to undergo bagging. Default is 0.")
 	parser.add_argument("--tune_hyper_parameters", dest="tune_hyper_parameters", action="store_true", 
 						help="engage in hyperparameter tuning for each feature.")
+	parser.add_argument("--k_folds", dest="k_folds", default=5, type=int, 
+						help="Does K folds per hyper parameter combination.")
+
 	return parser.parse_args()
 
 train_df = None
@@ -78,36 +81,45 @@ n_permutations = None
 bagging_fraction=None
 bagging_freq=None
 tune_hyper_parameters = None
+k_folds=None
 
-def get_model_hyper(): 
+def get_model_hyper(dataset_length): 
 	model_hyper = None
 	model_fixed = None
 	if model_name == 'lgbm': 
+		min_data_in_leaf = [int(0.05 * dataset_length), int(0.2 * dataset_length)]
+		num_leaves = [15, 31]
+
+		if device=='gpu': 
+			min_data_in_leaf = [*min_data_in_leaf, int(0.3 * dataset_length)]
+			num_leaves = [*num_leaves, 63]
 		model_hyper = {
-			'learning_rate': [0.5, 0.1, 0.05],#, 0.001],
-			'min_split_gain': [0, 0.05, 0.1],#, 0.25, 0.5],
-			'min_data_in_leaf': [1, 5, 10] #, 20],
+			'learning_rate': [0.1, 0.05],
+			'min_split_gain': [0.05, 0.1],#, 0.25, 0.5]
+			'num_leaves': num_leaves, 
+			'min_data_in_leaf': min_data_in_leaf, 
+			#'max_depth': [-1, 25, 50],
 	 	}
 		model_fixed = {
 			'model_name': 'lgbm',
-			'max_depth': 13,#, 25, 50, 100],
-			'num_leaves': 15,#, 31, 63],#, 127, 255],
-			'objective': 'regression',
-			'device': 'cpu',
+			# 'max_depth': 13,#, 25, 50, 100],
+			# 'num_leaves': 15,#, 31, 63],#, 127, 255],
+			'objective': objective,
+			'device': device,
 			'verbose': -1, 
 			'early_stopping_round': 15
 		}
 	if model_name == 'rf': 
 		model_hyper = {
 			'n_estimators': [50, 100, 250],
-			'max_depth': [25, 50, 100],#, 1000],
+			'max_depth': [25, 50, -1],#, 1000],
 			'num_leaves': [15, 31, 63],
 			'bagging_fraction': [0.25, 0.5, 0.75]
  		}
 		model_fixed = {
 			'model_name': 'rf',
-			'objective': 'regression',
-			'device': 'cpu',
+			'objective': objective,
+			'device': device,
 			'bagging_freq': 1,
 			'verbose': -1,
 			'early_stopping_round': 15
@@ -128,8 +140,8 @@ def run_mpi_model(feature_name):
 
 	#TODO: if model does not use GPUs, ensure to warn user and switch 
 	# back to CPU specifications. 
-	param_list = None
-	param_list = {
+	param_list = {}
+	param_list['best_model_params'] = {
 		"learning_rate": learning_rate,
 		"n_estimators": n_estimators,
 		"max_depth": max_depth,
@@ -138,7 +150,7 @@ def run_mpi_model(feature_name):
 	}
 	if tune_hyper_parameters: 
 		print("hyperparam tuning")
-		model_hyper, model_fixed = get_model_hyper()
+		model_hyper, model_fixed = get_model_hyper(len(train_df))
 		param_list = hyperparameter_tune(
 			model_class = AbstractModel,
 			model_hyper = model_hyper,
@@ -147,39 +159,40 @@ def run_mpi_model(feature_name):
 			train_fixed = {},
 			data = train_df,
 			y_feature= y_col,
-			k_folds= 5,
+			k_folds= k_folds,
 			train_size=0.85,
 			device=device,
 			verbose= False,
 		)
 	print("Creating abstract model")
-	model = AbstractModel(
-		model_name=model_name,
-		objective=objective,
-		model_type=objective,
-		device=device,
-		gpu_device_id=gpu_device_id,
-		verbose=-1,
-		**param_list[0]
-	)
-	output = model.fit(train_df,
-		test_df,
-		x_cols,
-		y_col,
-		calc_permutation_importance = calc_permutation_importance,
-		calc_permutation_score = calc_permutation_score,
-		n_permutations = n_permutations,
-		eval_set=True)
+	try:
+		model = AbstractModel(
+			model_name=model_name,
+			objective=objective,
+			model_type=objective,
+			device=device,
+			gpu_device_id=gpu_device_id,
+			verbose=-1,
+			**param_list["best_model_params"]
+		)
+		output = model.fit(train_df,
+			test_df,
+			x_cols,
+			y_col,
+			calc_permutation_importance = calc_permutation_importance,
+			calc_permutation_score = calc_permutation_score,
+			n_permutations = n_permutations,
+			eval_set=True)
+		output['rank']= rank
+		output['node_id']= node_id
+		output['gpu_device_id']= gpu_device_id
+		output['n_jobs']= n_jobs
+		output['feature'] = feature_name
 	
-	output['rank']= rank
-	output['node_id']= node_id
-	output['gpu_device_id']= gpu_device_id
-	output['n_jobs']= n_jobs
-	output['feature'] = feature_name
-
-	return output
-
-
+		return output
+	except Exception as ex: 
+		print("Model Fit Exception as:", ex)
+		return None
 
 def main():
 	print("getting arguments")
@@ -203,8 +216,10 @@ def main():
 	global bagging_fraction
 	global bagging_freq
 	global tune_hyper_parameters
+	global k_folds
 	global verbose
-
+	
+	random.seed(random_state)
 
 	df_filepath = args.infile
 	has_indices = args.has_indices
@@ -226,7 +241,7 @@ def main():
 	bagging_fraction = args.bagging_fraction
 	bagging_freq = args.bagging_freq
 	tune_hyper_parameters = args.tune_hyper_parameters
-
+	k_folds = args.k_folds
 	verbose = args.verbose
 	outfile = args.outfile
 
