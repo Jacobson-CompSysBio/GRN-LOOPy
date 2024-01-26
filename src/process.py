@@ -91,8 +91,9 @@ def get_model_hyper(dataset_length):
 		num_leaves = [15, 31]
 
 		if device=='gpu': 
-			min_data_in_leaf = [*min_data_in_leaf, int(0.3 * dataset_length)]
-			num_leaves = [*num_leaves, 63]
+			#min_data_in_leaf = [*min_data_in_leaf, int(0.3 * dataset_length)]
+			#num_leaves = [*num_leaves, 63]
+			print("gpu") 
 		model_hyper = {
 			'learning_rate': [0.1, 0.05],
 			'min_split_gain': [0.05, 0.1],#, 0.25, 0.5]
@@ -148,22 +149,29 @@ def run_mpi_model(feature_name):
 		"bagging_fraction": bagging_fraction,
 		"bagging_freq": bagging_freq,
 	}
-	if tune_hyper_parameters: 
-		print("hyperparam tuning")
-		model_hyper, model_fixed = get_model_hyper(len(train_df))
-		param_list = hyperparameter_tune(
-			model_class = AbstractModel,
-			model_hyper = model_hyper,
-			model_fixed = model_fixed,
-			train_hyper = {},
-			train_fixed = {},
-			data = train_df,
-			y_feature= y_col,
-			k_folds= k_folds,
-			train_size=0.85,
-			device=device,
-			verbose= False,
-		)
+
+	if device == 'cpu': 
+		param_list['num_threads'] = 4
+	if tune_hyper_parameters:
+		try: 
+			print("hyperparam tuning")
+			model_hyper, model_fixed = get_model_hyper(len(train_df))
+			param_list = hyperparameter_tune(
+				model_class = AbstractModel,
+				model_hyper = model_hyper,
+				model_fixed = model_fixed,
+				train_hyper = {},
+				train_fixed = {},
+				data = train_df,
+				y_feature= y_col,
+				k_folds= k_folds,
+				train_size=0.85,
+				device=device,
+				verbose= False,
+			)
+		except Exception as ex: 
+			print("EXCEPTION IN HYPER PARAM")
+			print(ex)
 	print("Creating abstract model")
 	try:
 		model = AbstractModel(
@@ -192,7 +200,6 @@ def run_mpi_model(feature_name):
 		return output
 	except Exception as ex: 
 		print("Model Fit Exception as:", ex)
-		return None
 
 def main():
 	print("getting arguments")
@@ -258,6 +265,7 @@ def main():
 	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
 		if executor is not None:
 			collected_output = list(executor.map(run_mpi_model, features))
+			print("Collating data")
 			pd.DataFrame(collected_output).to_csv(outfile)
 			# print(collected_output)
 
