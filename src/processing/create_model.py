@@ -26,16 +26,16 @@ class AbstractModel:
             n_estimators=kwargs['n_estimators'],
             criterion='mse',
             max_depth=kwargs['max_depth'],
-            min_samples_split=2,
-            min_samples_leaf=1,
+            min_samples_split=kwargs['min_samples_split'],
+            min_samples_leaf=kwargs['min_samples_leaf'],
             min_weight_fraction_leaf=0.0,
-            max_features='auto',
+            max_features=kwargs['max_features'],
             max_leaf_nodes=None,
             min_impurity_decrease=0.0,
             min_impurity_split=None,
             bootstrap=True,
-            oob_score=False,
-            n_jobs=None,
+            oob_score=True,
+            n_jobs=kwargs['n_jobs'],
             random_state=None,
             verbose=0,
             warm_start=False,
@@ -59,8 +59,6 @@ class AbstractModel:
             feature_imps = self.model.feature_importances_
             weight = feature_imps / sum(feature_imps)
         stop = time.time()
-        print("calc_permutation_score", calc_permutation_score)
-        print("calc_permutation_importance", calc_permutation_importance)
         feature_importances = None if model_name == 'svr' else "|".join(
             map(lambda x: f"{x}", self.model.feature_importances_))
         perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
@@ -72,7 +70,7 @@ class AbstractModel:
         return {
             'device': device,
             'train_time': stop - start,
-            'r2': None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
+            'r2': self.model.oob_score_, #None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
             'feature_imps': feature_importances,
             'features': '|'.join(map(lambda x: f"{x}", x_cols)),
             'n_permutations': n_permutations,

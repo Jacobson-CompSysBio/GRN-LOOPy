@@ -1,5 +1,6 @@
 import pandas as pd
 from utils.file_helpers import read_dataframe
+import argparse
 
 def get_arguments():
 	"""
@@ -44,6 +45,8 @@ def threshold_edgelist(df: pd.DataFrame, threshold: float):
 	threshold_index = int(threshold * df.shape[0])
 	return df.loc[:threshold_index]	
 
+
+
 def main():
 	"""
 	Main Function
@@ -62,14 +65,15 @@ def main():
 
 	#read output file (either edgelist or output from process)
 		# create edgelist from file 
-	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
+	df = read_dataframe(infile, sep=delim, header=header_idx)
+	
+	total_edgelist = create_edgelist(df)
 
-	
 	# threshold the network 
-	
+	thresholded_edgelist = threshold_edgelist(total_edgelist, threshold)
 
 	# add in correlates
-
+	
 	# make undirected if desired. 
 
 

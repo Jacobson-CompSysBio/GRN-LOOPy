@@ -9,6 +9,7 @@ from utils.file_helpers import read_dataframe
 from processing.create_model import AbstractModel
 from processing.data_helpers import get_train_test_split
 import argparse
+import numpy as np
 
 
 def get_arguments():
@@ -36,7 +37,7 @@ def get_arguments():
 						help="Objective for model: 'regression', 'mape', etc.")						
 	parser.add_argument("--learning_rate", dest="learning_rate", default  = 0.1, 
 						help="Boosting learning rate")						
-	parser.add_argument("--n_estimators", dest="n_estimators", default  = 100,
+	parser.add_argument("--n_estimators", dest="n_estimators", default  = 100, type=int,
 						help="The total number of leaves allowed in each tree. Recommended set large and fine tune with early stopping on validation")						
 	parser.add_argument("--num_leaves", dest="num_leaves", default  = 31,
 						help="max number of leaves in one tree")						
@@ -54,6 +55,7 @@ def get_arguments():
 						help="The total fraction of samples in the training set to be bagged")
 	parser.add_argument("--bagging_freq", dest="bagging_freq", default=1, 
 						help="The frequency to undergo bagging. Default is 1, for every iteration.")
+	parser.add_argument("--n_jobs", dest="njobs", default=24, type=int, help='the total number of jobs for each run')
 	return parser.parse_args()
 
 train_df = None
@@ -73,6 +75,7 @@ calc_permutation_score = None
 n_permutations = None
 bagging_fraction=None
 bagging_freq=None
+njobs=None
 
 
 def run_mpi_model(feature_name):
@@ -83,7 +86,10 @@ def run_mpi_model(feature_name):
 	node_id = os.environ['SLURM_NODEID']
 	gpus_per_device = 8
 	gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
-	n_jobs = -1
+	n_jobs = njobs
+	min_samples_split=5
+	min_samples_leaf=int(np.ceil(0.005 * train_df.shape[0]))
+	max_features=int(len(x_cols) / 3)
 
 	#TODO: if model does not use GPUs, ensure to warn user and switch 
 	# back to CPU specifications. 
@@ -99,6 +105,10 @@ def run_mpi_model(feature_name):
 		max_depth = max_depth,
 		bagging_fraction = bagging_fraction,
 		bagging_freq = bagging_freq,
+		n_jobs=njobs,
+		min_samples_split=min_samples_split,
+		min_samples_leaf=min_samples_leaf,
+		max_features=max_features,	
 		verbose=-1
 	)
 	output = model.fit(train_df,
@@ -114,7 +124,7 @@ def run_mpi_model(feature_name):
 	output['gpu_device_id']= gpu_device_id
 	output['n_jobs']= n_jobs
 	output['feature'] = feature_name
-
+	print(output['train_time'], flush=True)
 	return output
 
 
@@ -140,6 +150,7 @@ def main():
 	global n_permutations
 	global bagging_fraction
 	global bagging_freq
+	global njobs
 	global verbose
 
 
@@ -152,9 +163,9 @@ def main():
 	boosting_type = args.boosting_type
 	objective = args.objective
 	learning_rate = args.learning_rate
-	n_estimators = args.n_estimators
+	n_estimators = int(args.n_estimators)
 	num_leaves = args.num_leaves
-	max_depth = args.max_depth
+	max_depth = int(args.max_depth)
 	random_state = args.random_state
 	calc_permutation_importance = args.calc_permutation_importance
 	calc_permutation_score = args.calc_permutation_score
@@ -162,20 +173,20 @@ def main():
 	model_name = args.model_name
 	bagging_fraction = args.bagging_fraction
 	bagging_freq = args.bagging_freq
-
+	njobs = args.njobs
 	verbose = args.verbose
 	outfile = args.outfile
 
-	print("Reading Data In")
+	print("Reading Data In", flush=True)
 	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
 
-	print("Splitting Data")
+	print("Splitting Data", flush=True)
 	features = df.columns
 	train, test = get_train_test_split(df)
-	train_df = train
-	test_df = test
+	train_df = df # using whole df and juust snagging OOB for irf loop. 
+	test_df = test # no longer using test. grabbing oob r2
 
-	print("Distributing Data")
+	print("Distributing Data", flush=True)
 	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
 		if executor is not None:
 			collected_output = list(executor.map(run_mpi_model, features))
