@@ -12,7 +12,9 @@ def transform_edgelist_to_undirected(df: pd.DataFrame):
 	undirected_df = g.get_edge_dataframe()
 	print("converting vertices to df", flush=True)
 	undirected_df_vert = g.get_vertex_dataframe()
-	print("updating source and target nodes", flush=True)
+	print("updating source nodes", flush=True)
+	del(g)
 	undirected_df['source'].replace(undirected_df_vert['name'], inplace=True)
+	print("updating target nodes", flush=True)
 	undirected_df['target'].replace(undirected_df_vert['name'], inplace=True)
 	return undirected_df
