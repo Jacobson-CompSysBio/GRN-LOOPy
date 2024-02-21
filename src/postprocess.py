@@ -2,6 +2,7 @@ from utils.file_helpers import read_dataframe
 from postprocessing.create_edgelist import create_edgelist
 from postprocessing.network_thresholding_helpers import threshold_edgelist, sort_edgelist
 from postprocessing.correlate_addition_helpers import add_correlates_back_to_df
+from postprocessing.transform_edgelist import transform_edgelist_to_undirected
 import argparse 
 
 
@@ -20,6 +21,8 @@ def get_arguments():
 						help='The file path to the representative map set.')
 	parser.add_argument('--make_undirected', dest='make_undirected', action='store_true',
 						help="removes low variance elements using the cv_thresh from data and saves.")
+	parser.add_argument('--weigh_edges_by_acc', dest='weigh_edges_by_acc', action='store_true',
+						help='weighs edges in output edgelist by accuracy score')
 	parser.add_argument('--outfile', dest='outfile', action='store', default=None,
 						help='the base name for the output files. Default is preprocessed.tsv')
 	parser.add_argument('--verbose', dest='verbose', action='store_true',
@@ -40,6 +43,7 @@ def main():
 	threshold = args.threshold
 	rep_path = args.rep_path
 	make_undirected = args.make_undirected
+	weigh_by_acc = args.weigh_edges_by_acc
 	outfile = args.outfile
 	verbose = args.verbose
 
@@ -53,13 +57,19 @@ def main():
 	# create network edgelist
 	if verbose:
 		print("Creating edgelist")
-	network_edgelist = create_edgelist( df [ ~df.feature_imps.isna() ]  )
+	network_edgelist = create_edgelist( df [ ~df.feature_imps.isna() ], weigh_by_acc)
 
 	# sort the edgelist 
 	if verbose: 
 		print("Sorting Edgelist")
 	sorted_edgelist = sort_edgelist(network_edgelist, 'weight')
 	
+	if make_undirected: 
+		if verbose: 
+			print("Collapsing edges to undirected")
+			print(sorted_edgelist)
+		sorted_edgelist = transform_edgelist_to_undirected(sorted_edgelist)
+
 	print(sorted_edgelist)
 	# threshold the network 
 	if verbose: 
