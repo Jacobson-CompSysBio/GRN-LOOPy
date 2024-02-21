@@ -50,7 +50,7 @@ def main():
 	#read output file (either edgelist or output from process)
 		# create edgelist from file 
 	if verbose:
-		print("Reading dataframe")
+		print("Reading dataframe", flush=True)
 	df = read_dataframe(infile, sep=delim, index_col=0, header=0)
 	if verbose:
 		print(df.head())
