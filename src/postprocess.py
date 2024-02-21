@@ -53,35 +53,35 @@ def main():
 		print("Reading dataframe", flush=True)
 	df = read_dataframe(infile, sep=delim, index_col=0, header=0)
 	if verbose:
-		print(df.head())
+		print(df.head(), flush=True)
 	# create network edgelist
 	if verbose:
-		print("Creating edgelist")
+		print("Creating edgelist", flush=True)
 	network_edgelist = create_edgelist( df [ ~df.feature_imps.isna() ], weigh_by_acc)
 
 	# sort the edgelist 
 	if verbose: 
-		print("Sorting Edgelist")
+		print("Sorting Edgelist", flush=True)
 	sorted_edgelist = sort_edgelist(network_edgelist, 'weight')
 	
 	if make_undirected: 
 		if verbose: 
-			print("Collapsing edges to undirected")
-			print(sorted_edgelist)
+			print("Collapsing edges to undirected", flush=True)
+			print(sorted_edgelist, flush=True)
 		sorted_edgelist = transform_edgelist_to_undirected(sorted_edgelist)
 
-	print(sorted_edgelist)
+	print(sorted_edgelist, flush=True)
 	# threshold the network 
 	if verbose: 
-		print("Thresholding edgelist")
+		print("Thresholding edgelist", flush=True)
 	thresholded_edgelist = threshold_edgelist(sorted_edgelist, threshold)
 
 	# add in correlates
 	if rep_path is not None: 
 		if verbose: 
-			print("Adding back correlates")
+			print("Adding back correlates", flush=True)
 		thresholded_edgelist = add_correlates_back_to_df(thresholded_edgelist, rep_path)
-	print(thresholded_edgelist)
+	print(thresholded_edgelist, flush=True)
 	if outfile is None: 
 		outfile_suffix = ""
 		if make_undirected:
