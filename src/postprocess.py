@@ -83,7 +83,12 @@ def main():
 		thresholded_edgelist = add_correlates_back_to_df(thresholded_edgelist, rep_path)
 	print(thresholded_edgelist)
 	if outfile is None: 
-		outfile = f"network_edgelist_top_{threshold}.tsv"
+		outfile_suffix = ""
+		if make_undirected:
+			outfile_suffix = "_undirected"
+		if weigh_by_acc: 
+			outfile_suffix = f"_weighted_by_r2{outfile_suffix}"
+		outfile = f"network_edgelist_top_{threshold}{outfile_suffix}.tsv"
 	thresholded_edgelist.to_csv(outfile, sep='\t')
 
 
