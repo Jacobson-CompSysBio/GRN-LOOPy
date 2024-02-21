@@ -38,7 +38,7 @@ def main():
 	args = get_arguments()
 
 	infile = args.infile
-# 	has_indices = args.has_indices
+
 	delim = args.delim
 	threshold = args.threshold
 	rep_path = args.rep_path
@@ -59,11 +59,12 @@ def main():
 		print("Creating edgelist", flush=True)
 	network_edgelist = create_edgelist( df [ ~df.feature_imps.isna() ], weigh_by_acc)
 
+	del(df)
 	# sort the edgelist 
 	if verbose: 
 		print("Sorting Edgelist", flush=True)
 	sorted_edgelist = sort_edgelist(network_edgelist, 'weight')
-	
+	del(network_edgelist)
 	if make_undirected: 
 		if verbose: 
 			print("Collapsing edges to undirected", flush=True)
@@ -75,7 +76,8 @@ def main():
 	if verbose: 
 		print("Thresholding edgelist", flush=True)
 	thresholded_edgelist = threshold_edgelist(sorted_edgelist, threshold)
-
+	
+	del(sorted_edgelist)
 	# add in correlates
 	if rep_path is not None: 
 		if verbose: 
