@@ -1,7 +1,12 @@
 import igraph as ig
 import pandas as pd
+from pandarallel import pandarallel
+
+def replace_index_with_name(x_index, idx_to_name_df): 
+	return idx_to_name_df.loc[x_index]['name']
 
 def transform_edgelist_to_undirected(df: pd.DataFrame): 
+	pandarallel.initialize()
 	edges = [tuple(x) for x in df.values]
 	print("converting edges to tuple", flush=True)
 	g = ig.Graph.TupleList(edges, edge_attrs=['weight'], directed=True)
@@ -15,8 +20,11 @@ def transform_edgelist_to_undirected(df: pd.DataFrame):
 	print("updating source nodes", flush=True)
 	del(g)
 	#undirected_df['source'].replace(undirected_df_vert['name'], inplace=True)
-	undirected_df['source'] = undirected_df['source'].apply(lambda x: undirected_df_vert.loc[x]['name'])
+	
+	#undirected_df['source'] = undirected_df['source'].apply(lambda x: undirected_df_vert.loc[x]['name'])
+	undirected_df['source'] = undirected_df['source'].parallel_apply(replace_index_with_name, args=(undirected_df_vert,) )#lambda x: undirected_df_vert.loc[x]['name'])
 	print("updating target nodes", flush=True)
-	undirected_df['target'] = undirected_df['target'].apply(lambda x: undirected_df_vert.loc[x]['name'])
+	#undirected_df['target'] = undirected_df['target'].apply(lambda x: undirected_df_vert.loc[x]['name'])
+	undirected_df['target'] = undirected_df['target'].parallel_apply(replace_index_with_name, args=(undirected_df_vert,) )#lambda x: undirected_df_vert.loc[x]['name'])
 	#undirected_df['target'].replace(undirected_df_vert['name'], inplace=True)
 	return undirected_df
