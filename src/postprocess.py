@@ -25,6 +25,8 @@ def get_arguments():
 						help='weighs edges in output edgelist by accuracy score')
 	parser.add_argument('--outfile', dest='outfile', action='store', default=None,
 						help='the base name for the output files. Default is preprocessed.tsv')
+	parser.add_argument("--r2_threshold", dest="r2_threshold", default=None, type=float,
+						help='by including this, the user supplies a value 0 to 1 to remove all models below that r2 threshold')	
 	parser.add_argument('--verbose', dest='verbose', action='store_true',
 						help='prints verbosely')
 
@@ -45,6 +47,7 @@ def main():
 	make_undirected = args.make_undirected
 	weigh_by_acc = args.weigh_edges_by_acc
 	outfile = args.outfile
+	r2_threshold = args.r2_threshold
 	verbose = args.verbose
 
 	#read output file (either edgelist or output from process)
@@ -55,6 +58,11 @@ def main():
 	if verbose:
 		print(df.head(), flush=True)
 	# create network edgelist
+	if r2_threshold is not None: 
+		if verbose: 
+			print("Thresholding Models below r2 of: ", r2_threshold)
+		df = df[ df['r2'] >= r2_threshold ]
+
 	if verbose:
 		print("Creating edgelist", flush=True)
 	network_edgelist = create_edgelist( df [ ~df.feature_imps.isna() ], weigh_by_acc)
@@ -88,10 +96,12 @@ def main():
 		outfile_suffix = ""
 		if make_undirected:
 			outfile_suffix = "_undirected"
+		if r2_threshold is not None: 
+			outfile_suffix = f"_r2thresholded{r2_threshold}{outfile_suffix}"
 		if weigh_by_acc: 
 			outfile_suffix = f"_weighted_by_r2{outfile_suffix}"
 		outfile = f"network_edgelist_top_{threshold}{outfile_suffix}.tsv"
-	thresholded_edgelist.to_csv(outfile, sep='\t')
+	thresholded_edgelist.to_csv(outfile, sep='\t',index=False)
 
 
 if __name__ == "__main__": 

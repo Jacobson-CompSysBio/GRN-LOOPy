@@ -56,6 +56,7 @@ def get_arguments():
 	parser.add_argument("--bagging_freq", dest="bagging_freq", default=1, 
 						help="The frequency to undergo bagging. Default is 1, for every iteration.")
 	parser.add_argument("--n_jobs", dest="njobs", default=24, type=int, help='the total number of jobs for each run')
+	parser.add_argument("--n_irf_iterations", dest="n_irf_iter", default=5, type=int, help="the total number of iterations for each iRF model")
 	return parser.parse_args()
 
 train_df = None
@@ -76,14 +77,16 @@ n_permutations = None
 bagging_fraction=None
 bagging_freq=None
 njobs=None
-
+n_irf_iter=None
 
 def run_mpi_model(feature_name):
 	x_cols = train_df.columns[train_df.columns != feature_name]
 	y_col = feature_name
 
 	rank = MPI.COMM_WORLD.Get_rank()
-	node_id = os.environ['SLURM_NODEID']
+	node_id ="lsf_system" #os.environ.keys()
+	#print("node id is: ", node_id)
+	print("rank is: ", rank, flush=True)
 	gpus_per_device = 8
 	gpu_device_id = rank % gpus_per_device if device == 'gpu' else -1 
 	n_jobs = njobs
@@ -100,15 +103,15 @@ def run_mpi_model(feature_name):
 		model_type=objective,
 		device=device,
 		gpu_device_id=gpu_device_id,
-		learning_rate = learning_rate,
+		# learning_rate = learning_rate,
 		n_estimators=n_estimators,
-		max_depth = max_depth,
-		bagging_fraction = bagging_fraction,
-		bagging_freq = bagging_freq,
+		# max_depth = max_depth,
+		# bagging_fraction = bagging_fraction,
+		# bagging_freq = bagging_freq,
 		n_jobs=njobs,
-		min_samples_split=min_samples_split,
-		min_samples_leaf=min_samples_leaf,
-		max_features=max_features,	
+		# min_samples_split=min_samples_split,
+		# min_samples_leaf=min_samples_leaf,
+		# max_features=max_features,	
 		verbose=-1
 	)
 	output = model.fit(train_df,
@@ -117,14 +120,15 @@ def run_mpi_model(feature_name):
 		y_col,
 		calc_permutation_importance = calc_permutation_importance,
 		calc_permutation_score = calc_permutation_score,
-		n_permutations = n_permutations)
+		n_permutations = n_permutations,
+		n_iterations=n_irf_iter )
 	
 	output['rank']= rank
 	output['node_id']= node_id
 	output['gpu_device_id']= gpu_device_id
 	output['n_jobs']= n_jobs
 	output['feature'] = feature_name
-	print(output['train_time'], flush=True)
+	print(feature_name, rank, output['train_time'], sep='\t', flush=True)
 	return output
 
 
@@ -152,7 +156,7 @@ def main():
 	global bagging_freq
 	global njobs
 	global verbose
-
+	global n_irf_iter
 
 	df_filepath = args.infile
 	has_indices = args.has_indices
@@ -176,7 +180,7 @@ def main():
 	njobs = args.njobs
 	verbose = args.verbose
 	outfile = args.outfile
-
+	n_irf_iter = args.n_irf_iter
 	print("Reading Data In", flush=True)
 	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
 
@@ -189,8 +193,9 @@ def main():
 	print("Distributing Data", flush=True)
 	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
 		if executor is not None:
+			print(" I AM THE EXECUTOR!" )
 			collected_output = list(executor.map(run_mpi_model, features))
-			pd.DataFrame(collected_output).to_csv(outfile)
+			pd.DataFrame(collected_output).to_csv(outfile, sep='\t')
 			# print(collected_output)
 
 ## TODO: We need to factor in the kfold crass validation. Additionally, for data sets too small, a functionality should be implemented for folks to forego the validation step in the train/test split (for astoundingly small rna seq data sets)

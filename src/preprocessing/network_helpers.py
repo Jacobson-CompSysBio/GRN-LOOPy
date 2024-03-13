@@ -84,7 +84,8 @@ def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_re
 	"""
 	This function reads in the raw data and removes the non_representative elements.
 	"""
-	df = file_helpers.read_dataframe(raw_data_file, header=header_idx, has_indices=has_indices)
+	index = 0 if has_indices else None
+	df = file_helpers.read_dataframe(raw_data_file, header=header_idx, index_col=index)
 	
 	filtered_cols = list(filter(lambda x: x not in non_representatives, df.columns))
 	filtered_df = df[ filtered_cols ]

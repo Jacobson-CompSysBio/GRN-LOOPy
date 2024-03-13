@@ -21,7 +21,7 @@ def get_arguments():
 						help='saves the correlation data to file')
 	parser.add_argument('--remove_high_corr', dest='remove_high_corr', action='store_true',
 						help='removes highly correlated values from the dataset.')
-	parser.add_argument('--cv_thresh', dest='cv_thresh', action='store', default=0.01,
+	parser.add_argument('--cv_thresh', dest='cv_thresh', action='store', default=0.01, type=float,
 						help='the minimal threshold of a coefficient of variance to keep: mu/sigma')
 	parser.add_argument('--remove_low_variance', dest='remove_low_variance', action='store_true',
 						help="removes low variance elements using the cv_thresh from data and saves.")
@@ -60,7 +60,7 @@ def main():
 		""")
 
 	if verbose: 
-		print("Removing NO Variance Values")
+		print("Removing NO Variance Values", flush=True)
 	
 
 	if remove_low_variance:
@@ -69,13 +69,13 @@ def main():
 
 
 	if verbose: 
-		print("Creating Correlation List.")
+		print("Creating Correlation List.", flush=True)
 
 	if remove_high_corr:
 		stacked_corr_data = create_correlation_list(input_file, has_indices, corr_thresh, save_corr)
 
 		if verbose: 
-			print("Extracting Representatives.") 
+			print("Extracting Representatives.", flush=True) 
 
 		representatives, non_representatives = extract_representatives_and_save_to_files(
 			df = stacked_corr_data,
@@ -83,7 +83,7 @@ def main():
 		) 
 
 		if verbose: 
-			print("Saving Dataset with Nonrepresentatives Removed")
+			print("Saving Dataset with Nonrepresentatives Removed", flush=True)
 
 		# TODO: Change the name! we're removing nonreps
 		remove_representatives_from_main_dataset_and_save(input_file, non_representatives, has_indices=has_indices, outfile=outfile) 

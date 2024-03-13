@@ -25,42 +25,48 @@ class AbstractModel:
         self.model = RandomForestRegressorWithWeights(
             n_estimators=kwargs['n_estimators'],
             criterion='mse',
-            max_depth=kwargs['max_depth'],
-            min_samples_split=kwargs['min_samples_split'],
-            min_samples_leaf=kwargs['min_samples_leaf'],
-            min_weight_fraction_leaf=0.0,
-            max_features=kwargs['max_features'],
-            max_leaf_nodes=None,
-            min_impurity_decrease=0.0,
-            min_impurity_split=None,
+            #max_depth=kwargs['max_depth'],
+            #min_samples_split=kwargs['min_samples_split'],
+            #min_samples_leaf=kwargs['min_samples_leaf'],
+            #min_weight_fraction_leaf=0.0,
+            #max_features=kwargs['max_features'],
+            #max_leaf_nodes=None,
+            #min_impurity_decrease=0.0,
+            #min_impurity_split=None,
             bootstrap=True,
             oob_score=True,
             n_jobs=kwargs['n_jobs'],
-            random_state=None,
+            #random_state=None,
             verbose=0,
-            warm_start=False,
-            ccp_alpha=0.0,
-            max_samples=None
+            #warm_start=False,
+            #ccp_alpha=0.0,
+            #max_samples=None
         )
 
-    def run_rf_model(self, train, test, x_cols, y_col, n_iterations, eval_set=False, device='cpu', model_name = "lgbm", calc_permutation_importance = False, calc_permutation_score=False, n_permutations=1000):
+    def run_rf_model(self, train, test, x_cols, y_col, n_iterations, eval_set=False, device='cpu', model_name = "lgbm", calc_permutation_importance = False, calc_permutation_score=False, n_permutations=1000, verbose=False):
         x_train = train[x_cols]
         y_train = train[y_col]
-        x_test = test[x_cols]
-        y_test = test[y_col]
-    
+        #x_test = test[x_cols]
+        #y_test = test[y_col]
+        print("Starting irf-model", y_col, flush=True) 
 
         start = time.time()
-        
         feature_weights = np.ones(x_train.shape[1])
         weight = feature_weights / np.sum(feature_weights)
-        for i in range(n_iterations): 
+        for i in range(n_iterations):
             self.model.fit(x_train, y_train, feature_weight = weight)
             feature_imps = self.model.feature_importances_
             weight = feature_imps / sum(feature_imps)
+            if verbose: 
+                print(f"Iteration time @", i, ":  ", time.time() - start) 
         stop = time.time()
+        print("Total time: ", stop- start, flush=True)
+        
+        feature_mask = np.arange(len(x_cols)) if model_name == 'svr' else np.argwhere(self.model.feature_importances_ > 0)
         feature_importances = None if model_name == 'svr' else "|".join(
-            map(lambda x: f"{x}", self.model.feature_importances_))
+            map(lambda x: f"{x}", np.array(self.model.feature_importances_)[feature_mask].reshape(-1)))
+        feature_names = np.array(x_cols)[feature_mask].reshape(-1)
+
         perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
             self.model, x_train, y_train, n_permutations=n_permutations)[2] # 3rd value is the p_value
         permutation_importances = None if not calc_permutation_importance else "|".join(
@@ -72,7 +78,7 @@ class AbstractModel:
             'train_time': stop - start,
             'r2': self.model.oob_score_, #None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
             'feature_imps': feature_importances,
-            'features': '|'.join(map(lambda x: f"{x}", x_cols)),
+            'features': '|'.join(map(lambda x: f"{x}", feature_names)),
             'n_permutations': n_permutations,
             'p_value': perm_test_results_p_val,
             'permutation_importance': permutation_importances,

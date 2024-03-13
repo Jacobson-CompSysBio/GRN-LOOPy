@@ -54,7 +54,8 @@ def create_correlation_list(filename: str, has_indices: bool, corr_thresh: float
 
 	Data are then saved to file. 
 	"""
-	df = file_helpers.read_dataframe(filename, header=True, sep='\t', has_indices=has_indices)
+	index_col = 0 if has_indices else None
+	df = file_helpers.read_dataframe(filename, header=0, sep='\t', index_col=index_col)
 	print(df) 
 	df = correlate_data(df, has_indices)
 	print('post correlation')
