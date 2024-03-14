@@ -59,19 +59,17 @@ def main():
 		verbose: {verbose}
 		""")
 
-	if verbose: 
-		print("Removing NO Variance Values", flush=True)
-	
-
 	if remove_low_variance:
+		if verbose: 
+			print("removing low variance thresh: ", cv_thresh)
 		# save low variance, then use that low variance file as base input.
 		input_file = remove_low_var_and_save(input_file, cv_thresh, has_indices)
 
 
-	if verbose: 
-		print("Creating Correlation List.", flush=True)
 
 	if remove_high_corr:
+		if verbose: 
+			print("creating correlation list", flush=True)
 		stacked_corr_data = create_correlation_list(input_file, has_indices, corr_thresh, save_corr)
 
 		if verbose: 

@@ -14,8 +14,12 @@ def correlate_data(df: pd.DataFrame, has_index_col: bool) ->  pd.DataFrame:
 	columns_for_correlation = df.columns[1:] if has_index_col else df.columns
 
 	data_for_correlation = df[ columns_for_correlation ]
-
-	return data_for_correlation.corr()
+	reshaped = data_for_correlation.values.reshape(list(reversed(data_for_correlation.shape)))
+	total_corrmat = np.corrcoef(reshaped)
+	total_corrmat = pd.DataFrame(total_corrmat)
+	total_corrmat.columns = columns_for_correlation
+	total_corrmat.index = columns_for_correlation
+	return total_corrmat
 
 def extract_correlates_to_upper_right(df: pd.DataFrame) -> pd.DataFrame:
 	"""
@@ -24,26 +28,28 @@ def extract_correlates_to_upper_right(df: pd.DataFrame) -> pd.DataFrame:
 
 	this assumes the diagonal has all 1s
 	"""
-	df = df.where(np.triu(np.ones(df.shape)).astype(bool))
+	npdf = np.triu(df)
+	colnames = df.columns
+	df = pd.DataFrame(npdf, columns = colnames, index=colnames)
 
 	# remove identity
-	df = df - np.eye(len(df))
+	df = df - (df * np.eye(df.shape[1]))
 
 	# replace na
-	return df.fillna(0)
+	return df[ df.abs() >0 ]
 
 def stack_data(df: pd.DataFrame, threshold: float = 0.95) -> pd.DataFrame:
 	"""
 	This stacks data into a 1 to 1 of the correlation matrix.
 	"""
-	df = df.stack().reset_index()
+	df = df[ df.abs() > threshold ]
+	df = df.stack(dropna=True).reset_index()
 	stack_values = df.columns[-1]
 	print(df)
 	print('final column', stack_values)
 	print(df[stack_values].abs())
 	print(type(threshold))
-	df = df[ df[stack_values].abs() > threshold ]
-	print(df)
+	print(df.head())
 	df.columns = ['from', 'to', 'corr']
 	return df.reset_index(drop = True)
 
@@ -56,14 +62,14 @@ def create_correlation_list(filename: str, has_indices: bool, corr_thresh: float
 	"""
 	index_col = 0 if has_indices else None
 	df = file_helpers.read_dataframe(filename, header=0, sep='\t', index_col=index_col)
-	print(df) 
+	print(df.head(), flush=True) 
 	df = correlate_data(df, has_indices)
-	print('post correlation')
+	print('post correlation', flush=True)
 	df = extract_correlates_to_upper_right(df)
-	print('post extraction') 
+	print('post extraction', flush=True) 
 	df = stack_data(df, corr_thresh)
 	
-	print('done')
+	print('done', flush=True)
 	base_name = '.'.join(filename.split('.')[0:-1])
 	outfile_name = f"{base_name}_correlation_over_{corr_thresh}.tsv"
 
