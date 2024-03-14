@@ -128,7 +128,11 @@ def run_mpi_model(feature_name):
 	output['gpu_device_id']= gpu_device_id
 	output['n_jobs']= n_jobs
 	output['feature'] = feature_name
-	print(feature_name, rank, output['train_time'], sep='\t', flush=True)
+	# print(feature_name, rank, output['train_time'], sep='\t', flush=True)
+	# print(output['train_time'], flush=True)
+	del(model)
+	del(x_cols)
+	del(y_col)
 	return output
 
 

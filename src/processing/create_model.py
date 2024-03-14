@@ -1,4 +1,4 @@
-from irf.ensemble import RandomForestRegressorWithWeights
+from irf.ensemble import RandomForestClassifierWithWeights, RandomForestRegressorWithWeights
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import permutation_test_score
 from sklearn import metrics
@@ -15,24 +15,25 @@ class AbstractModel:
     objective = None
     model = None
 
-    def __init__(self, model_name: str, objective: str, **kwargs):
+    def __init__(self, model_name: str, objective: str **kwargs):
         self.model_name = model_name
         self.objective = objective
         self.device = kwargs['device']
         self.define_model(**kwargs)
 
     def define_model(self, **kwargs):
+		rf_model = RandomForestRegressorWithWeights if self.objective == 'regression' else 
         self.model = RandomForestRegressorWithWeights(
             n_estimators=kwargs['n_estimators'],
             criterion='mse',
-            #max_depth=kwargs['max_depth'],
-            #min_samples_split=kwargs['min_samples_split'],
-            #min_samples_leaf=kwargs['min_samples_leaf'],
-            #min_weight_fraction_leaf=0.0,
-            #max_features=kwargs['max_features'],
-            #max_leaf_nodes=None,
-            #min_impurity_decrease=0.0,
-            #min_impurity_split=None,
+            max_depth=kwargs['max_depth'],
+            # min_samples_split=kwargs['min_samples_split'],
+            # min_samples_leaf=kwargs['min_samples_leaf'],
+            min_weight_fraction_leaf=0.0,
+            # max_features=kwargs['max_features'],
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.0,
+            min_impurity_split=None,
             bootstrap=True,
             oob_score=True,
             n_jobs=kwargs['n_jobs'],
@@ -46,9 +47,8 @@ class AbstractModel:
     def run_rf_model(self, train, test, x_cols, y_col, n_iterations, eval_set=False, device='cpu', model_name = "lgbm", calc_permutation_importance = False, calc_permutation_score=False, n_permutations=1000, verbose=False):
         x_train = train[x_cols]
         y_train = train[y_col]
-        #x_test = test[x_cols]
-        #y_test = test[y_col]
-        print("Starting irf-model", y_col, flush=True) 
+        # x_test = test[x_cols]
+        # y_test = test[y_col]
 
         start = time.time()
         feature_weights = np.ones(x_train.shape[1])
@@ -85,8 +85,6 @@ class AbstractModel:
             'eval_set': eval_set
         }
 
-
-    
     def fit(self, train, test, x_cols, y_col, n_iterations=5, eval_set=None,  calc_permutation_importance = False, calc_permutation_score = False, n_permutations = 1000):
         return_data = None
         if self.objective != 'correlation': 
@@ -95,7 +93,7 @@ class AbstractModel:
                 test = test,
                 x_cols = x_cols,
                 y_col = y_col,
-		n_iterations = n_iterations,
+                n_iterations = n_iterations,
                 eval_set = eval_set,
                 device = self.device,
                 model_name = self.model_name,
