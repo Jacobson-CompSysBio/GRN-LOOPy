@@ -105,7 +105,7 @@ def run_mpi_model(feature_name):
 		gpu_device_id=gpu_device_id,
 		# learning_rate = learning_rate,
 		n_estimators=n_estimators,
-		# max_depth = max_depth,
+		max_depth = max_depth,
 		# bagging_fraction = bagging_fraction,
 		# bagging_freq = bagging_freq,
 		n_jobs=njobs,

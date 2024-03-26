@@ -15,14 +15,14 @@ class AbstractModel:
     objective = None
     model = None
 
-    def __init__(self, model_name: str, objective: str **kwargs):
+    def __init__(self, model_name: str, objective: str, **kwargs):
         self.model_name = model_name
         self.objective = objective
         self.device = kwargs['device']
         self.define_model(**kwargs)
 
     def define_model(self, **kwargs):
-		rf_model = RandomForestRegressorWithWeights if self.objective == 'regression' else 
+        #rf_model = RandomForestRegressorWithWeights if self.objective == 'regression' else RandomForestClassifierWithWeights 
         self.model = RandomForestRegressorWithWeights(
             n_estimators=kwargs['n_estimators'],
             criterion='mse',
