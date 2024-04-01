@@ -186,7 +186,9 @@ def main():
 	outfile = args.outfile
 	n_irf_iter = args.n_irf_iter
 	print("Reading Data In", flush=True)
-	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
+
+	index = 0 if has_indices else None
+	df = read_dataframe(df_filepath, sep=delim, header=header_idx, index_col=index)
 
 	print("Splitting Data", flush=True)
 	features = df.columns

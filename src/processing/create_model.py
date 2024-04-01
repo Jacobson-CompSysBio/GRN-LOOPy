@@ -22,11 +22,11 @@ class AbstractModel:
         self.define_model(**kwargs)
 
     def define_model(self, **kwargs):
-        #rf_model = RandomForestRegressorWithWeights if self.objective == 'regression' else RandomForestClassifierWithWeights 
-        self.model = RandomForestRegressorWithWeights(
+        rf_model = RandomForestClassifierWithWeights if self.objective == 'classification' else RandomForestRegressorWithWeights
+        self.model = rf_model(
             n_estimators=kwargs['n_estimators'],
             criterion='mse',
-            max_depth=kwargs['max_depth'],
+            # max_depth=kwargs['max_depth'],
             # min_samples_split=kwargs['min_samples_split'],
             # min_samples_leaf=kwargs['min_samples_leaf'],
             min_weight_fraction_leaf=0.0,

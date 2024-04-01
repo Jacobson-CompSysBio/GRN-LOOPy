@@ -23,10 +23,11 @@ def remove_low_variance_features(raw_df: pd.DataFrame, variance_thresh: float, p
 	This function removes features with variance that
 	falls under the threshold variance_thresh
 	"""
-	
+	print("THESHOLDING", variance_thresh)
 	threshold_mask = raw_df.var() >= variance_thresh
+	print("MASK", threshold_mask)
 	high_var_columns = raw_df.columns[threshold_mask]
-
+	print("Thresholded!" )
 	low_variance_dataframe = raw_df[ high_var_columns ]
 
 	if len(low_variance_dataframe.columns) == 0: 
@@ -60,11 +61,12 @@ def remove_low_var_and_save(input_file: str, variance_thresh: float, has_index_c
 	to ensure that the original index columns are not lost.
 	"""
 
+	print("REMOVING")
 	index_col = 0 if has_index_col else None
 	raw_data = pd.read_csv(input_file, sep=sep, index_col= index_col)
-	
+	print("RAW DATA?", raw_data)
 	high_var_df = remove_low_variance_features(raw_data, variance_thresh, print_meta, os.path.dirname(input_file))
-
+	print("high var", high_var_df )
 	outfile_name = write_high_var_to_file(high_var_df, variance_thresh, input_file, has_index_col)
 
 	return outfile_name
