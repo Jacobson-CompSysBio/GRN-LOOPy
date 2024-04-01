@@ -47,18 +47,30 @@ class AbstractModel:
     def run_rf_model(self, train, test, x_cols, y_col, n_iterations, eval_set=False, device='cpu', model_name = "lgbm", calc_permutation_importance = False, calc_permutation_score=False, n_permutations=1000, verbose=False):
         x_train = train[x_cols]
         y_train = train[y_col]
-        # x_test = test[x_cols]
-        # y_test = test[y_col]
+        
+        x_test = None
+        y_test = None
+        if eval_set: 
+            x_test = test[x_cols]
+            y_test = test[y_col]
 
         start = time.time()
         feature_weights = np.ones(x_train.shape[1])
         weight = feature_weights / np.sum(feature_weights)
+        irf_r2_list = []
+
         for i in range(n_iterations):
             self.model.fit(x_train, y_train, feature_weight = weight)
             feature_imps = self.model.feature_importances_
             weight = feature_imps / sum(feature_imps)
+            
+            if eval_set:
+                predicted_y_hat = self.model.predict(x_test)
+                predicted_r2 = metrics.r2_score(y_test, predicted_y_hat)
+                irf_r2_list.append(predicted_r2)
             if verbose: 
-                print(f"Iteration time @", i, ":  ", time.time() - start) 
+                print(f"Iteration time @", i, ":  ", time.time() - start)
+             
         stop = time.time()
         print("Total time: ", stop- start, flush=True)
         
@@ -72,11 +84,13 @@ class AbstractModel:
         permutation_importances = None if not calc_permutation_importance else "|".join(
             map(lambda x: f"{x}", permutation_importance(self.model, x_train, y_train, n_repeats=n_permutations).importances_mean )
         )
-    
+        
         return {
             'device': device,
             'train_time': stop - start,
-            'r2': self.model.oob_score_, #None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
+            'r2': None if eval_set is False None else  metrics.r2_score(y_test, predicted_y_hat)
+            'r2_per_iteration': "|".join(irf_r2_list)
+            'oob_r2': self.model.oob_score_, #None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
             'feature_imps': feature_importances,
             'features': '|'.join(map(lambda x: f"{x}", feature_names)),
             'n_permutations': n_permutations,
