@@ -11,7 +11,7 @@ from src.processing import data_helpers
 
 class TestGetTrainTestSplit: 
 	"""
-	This class Testis a test suite for the get_train_test function.
+	This class Test is a test suite for the get_train_test function.
 	"""
 
 	def test_throws_error_when_no_data_supplied(self): 
