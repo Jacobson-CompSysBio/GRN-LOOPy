@@ -4,7 +4,9 @@ from preprocessing.correlation_helpers import create_correlation_list
 from preprocessing.network_helpers import (
 	extract_representatives_and_save_to_files,
 	remove_representatives_from_main_dataset_and_save)
+from preprocessing.normalization_helpers import normalize_data_set
 from preprocessing.variance_helpers import remove_low_var_and_save
+
 
 def get_arguments():
 	"""
@@ -19,6 +21,8 @@ def get_arguments():
 						type=float, help='the threshold at which to cut off values. Default 0.95')
 	parser.add_argument('--save_corr', dest='save_corr', action='store_true',
 						help='saves the correlation data to file')
+	parser.add_argument('--normalize', dest='normalize', action='store_true',
+						help='L1 normalization of all features within the data set')
 	parser.add_argument('--remove_high_corr', dest='remove_high_corr', action='store_true',
 						help='removes highly correlated values from the dataset.')
 	parser.add_argument('--cv_thresh', dest='cv_thresh', action='store', default=0.01, type=float,
@@ -32,7 +36,6 @@ def get_arguments():
 
 	return parser.parse_args()
 
-
 def main():
 	"""
 	Main Function
@@ -42,6 +45,7 @@ def main():
 	input_file = args.infile
 	has_indices = args.has_indices
 	remove_high_corr = args.remove_high_corr
+	normalize = args.normalize
 	corr_thresh = args.corr_thresh
 	cv_thresh = args.cv_thresh
 	remove_low_variance = args.remove_low_variance
@@ -58,6 +62,9 @@ def main():
 		save_corr: {save_corr}
 		verbose: {verbose}
 		""")
+
+	if normalize: 
+		input_file = normalize_data_set(input_file, has_indices)
 
 	if remove_low_variance:
 		if verbose: 
