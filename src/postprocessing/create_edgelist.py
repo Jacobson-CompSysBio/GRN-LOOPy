@@ -1,6 +1,6 @@
 import pandas as pd
 
-def parse_importances(importance_data: pd.DataFrame, weigh_by_acc:bool):
+def parse_importances(importance_data: pd.DataFrame, weigh_by_acc:bool) -> pd.DataFrame:
     features = importance_data['features'].split('|')
     acc = float(importance_data['r2'])
     feature_importances = importance_data['feature_imps'].split('|')
