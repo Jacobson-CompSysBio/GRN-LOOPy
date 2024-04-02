@@ -5,14 +5,13 @@ from sklearn import metrics
 import numpy as np
 import time
 
-
-
 class AbstractModel: 
     """
     This is a wrapper class for the ML / statistical models for network generation. 
     """
     model_name = None
     objective = None
+    irf_r2_list = None
     model = None
 
     def __init__(self, model_name: str, objective: str, **kwargs):
@@ -85,11 +84,18 @@ class AbstractModel:
             map(lambda x: f"{x}", permutation_importance(self.model, x_train, y_train, n_repeats=n_permutations).importances_mean )
         )
         
+        self.irf_r2_list = irf_r2_list
+
+        if eval_set:
+            best_score, best_iteration = self.evaluate()
+            self.best_iteration = best_iteration
+            self.best_score = best_score
+        self.r2 = self.model.oob_score_ if eval_set is False else  metrics.r2_score(y_test, predicted_y_hat)
         return {
             'device': device,
             'train_time': stop - start,
-            'r2': None if eval_set is False None else  metrics.r2_score(y_test, predicted_y_hat)
-            'r2_per_iteration': "|".join(irf_r2_list)
+            'r2': None if eval_set is False else  metrics.r2_score(y_test, predicted_y_hat),
+            'r2_per_iteration': '|'.join(map(lambda x: f"{x}", irf_r2_list)),
             'oob_r2': self.model.oob_score_, #None if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
             'feature_imps': feature_importances,
             'features': '|'.join(map(lambda x: f"{x}", feature_names)),
@@ -115,5 +121,18 @@ class AbstractModel:
                 calc_permutation_score = calc_permutation_score,
                 n_permutations = n_permutations
             )
-
         return return_data
+    
+    def evaluate(self):
+        if self.model_name == 'svr':
+            print("MODEL IS SVR?") 
+            return self.r2, None
+        if self.model_name == 'irf': 
+            print("SCORING?" )
+            score_idx = np.argmin(self.irf_r2_list)
+            output = self.irf_r2_list[ score_idx ], score_idx 
+            print("returning output")
+            return output
+        score_idx = np.argmin(self.model.evals_result_['valid_0']['l2'])
+        return self.model.evals_result_['valid_0']['l2'][score_idx], score_idx
+        
