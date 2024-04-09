@@ -129,7 +129,7 @@ def get_model_hyper(dataset_length):
 		}
 	if model_name == 'irf': 
 		model_hyper = {
-			'n_estimators': [50, 100, 500],
+			'n_estimators': [ 100, 500],
 			'max_depth': [ np.sqrt(dataset_length), dataset_length ],
 			'min_samples_leaf': [ 1, 5, np.sqrt(dataset_length)],
 			'bagging_fraction': [0.25, 0.5, 0.75]
@@ -138,7 +138,7 @@ def get_model_hyper(dataset_length):
 			'model_name': model_name,
 			'objective': objective,
 			'device': device,
-            'n_jobs': 4,
+			'n_jobs': 4,
 			'n_iterations': n_irf_iter,
 			'bagging_freq': 1,
 			'verbose': -1,
@@ -161,11 +161,12 @@ def run_mpi_model(feature_name):
 	param_list = {}
 	param_list['best_model_params'] = {
 		"n_estimators": n_estimators,
-		"max_depth": max_depth
+		"max_depth": max_depth,
+        "n_jobs": n_jobs
 	}
 
 	if device == 'cpu': 
-		param_list['num_threads'] = 4
+		param_list['num_threads'] = 4 #TODO: take this in from env. 
 	if tune_hyper_parameters:
 		try: 
 			print("hyperparam tuning")
@@ -204,13 +205,15 @@ def run_mpi_model(feature_name):
 			calc_permutation_importance = calc_permutation_importance,
 			calc_permutation_score = calc_permutation_score,
 			n_permutations = n_permutations,
-			eval_set=True)
+		)
 		output['rank']= rank
 		output['node_id']= node_id
 		output['gpu_device_id']= gpu_device_id
 		output['n_jobs']= n_jobs
 		output['feature'] = feature_name
-	
+		
+		
+
 		return output
 	except Exception as ex: 
 		print("Model Fit Exception as:", ex)

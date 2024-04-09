@@ -90,7 +90,7 @@ def hyperparameter_tune(
     for i in range(k_folds): 
         train, val = train_test_split(range(n_samples), train_size=train_size)
         train_indices.append(train)
-        val_indices.append(val)    
+        val_indices.append(val)
     x_cols = data.columns[ data.columns != y_feature ] 
     y_col = y_feature
     # unpack hyperparameters
@@ -195,10 +195,13 @@ def hyperparameter_tune(
         print(f'score: {eval_matrix[indices]}')
 
     best_idx = np.argmin(list(map(lambda x: np.mean(x), score_list)))
+    r2_variance = np.var(score_list)
+    
     return {
         "best_model_params": best_model_params, 
         "best_train_params": best_train_params, 
         "model_list": model_list, 
+		"model_r2_variance": r2_variance, 
         #"score_list": score_list, 
         #"r2_list": r2_list,
         "best_idx": best_idx, 

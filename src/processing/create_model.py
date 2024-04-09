@@ -57,7 +57,11 @@ class AbstractModel:
         feature_weights = np.ones(x_train.shape[1])
         weight = feature_weights / np.sum(feature_weights)
         irf_r2_list = []
-
+        predicted_y_hat = None
+        print("XTRAIN", x_train.head())
+        print("ytrain", y_train.head())
+        print(x_train.isna().sum().sum())
+        print(y_train.isna().sum())
         for i in range(n_iterations):
             self.model.fit(x_train, y_train, feature_weight = weight)
             feature_imps = self.model.feature_importances_
@@ -78,19 +82,21 @@ class AbstractModel:
             map(lambda x: f"{x}", np.array(self.model.feature_importances_)[feature_mask].reshape(-1)))
         feature_names = np.array(x_cols)[feature_mask].reshape(-1)
 
+        print("perm test")
         perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
             self.model, x_train, y_train, n_permutations=n_permutations)[2] # 3rd value is the p_value
         permutation_importances = None if not calc_permutation_importance else "|".join(
             map(lambda x: f"{x}", permutation_importance(self.model, x_train, y_train, n_repeats=n_permutations).importances_mean )
         )
-        
+        print("assigning scores")
         self.irf_r2_list = irf_r2_list
-
+        print("Eval set is: ", eval_set)
         if eval_set:
             best_score, best_iteration = self.evaluate()
             self.best_iteration = best_iteration
             self.best_score = best_score
         self.r2 = self.model.oob_score_ if eval_set is False else  metrics.r2_score(y_test, predicted_y_hat)
+        print("Returning values") 
         return {
             'device': device,
             'train_time': stop - start,
@@ -105,7 +111,7 @@ class AbstractModel:
             'eval_set': eval_set
         }
 
-    def fit(self, train, test, x_cols, y_col, n_iterations=5, eval_set=None,  calc_permutation_importance = False, calc_permutation_score = False, n_permutations = 1000):
+    def fit(self, train, test, x_cols, y_col, n_iterations=5, eval_set=False,  calc_permutation_importance = False, calc_permutation_score = False, n_permutations = 1000):
         return_data = None
         if self.objective != 'correlation': 
             return_data = self.run_rf_model(
@@ -125,13 +131,10 @@ class AbstractModel:
     
     def evaluate(self):
         if self.model_name == 'svr':
-            print("MODEL IS SVR?") 
             return self.r2, None
         if self.model_name == 'irf': 
-            print("SCORING?" )
             score_idx = np.argmin(self.irf_r2_list)
             output = self.irf_r2_list[ score_idx ], score_idx 
-            print("returning output")
             return output
         score_idx = np.argmin(self.model.evals_result_['valid_0']['l2'])
         return self.model.evals_result_['valid_0']['l2'][score_idx], score_idx
