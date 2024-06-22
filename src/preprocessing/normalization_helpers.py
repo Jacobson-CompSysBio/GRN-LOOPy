@@ -25,9 +25,9 @@ def normalize_data_set(input_file: str,  has_index_col: bool, sep: str = '\t', v
 
 	index_col = 0 if has_index_col else None
 	raw_data = pd.read_csv(input_file, sep=sep, index_col= index_col)
-	
+	scalar = 1000 
 	# L1 normalize data: 
-	raw_data = raw_data / raw_data.abs().sum()
+	raw_data = scalar * raw_data / raw_data.abs().sum()
 	
 	base_name = '.'.join(input_file.split('.')[0:-1])
 	outfile_name = f"{base_name}_l1_normalized.tsv"

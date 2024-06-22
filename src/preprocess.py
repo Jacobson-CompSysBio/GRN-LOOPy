@@ -6,7 +6,7 @@ from preprocessing.network_helpers import (
 	remove_representatives_from_main_dataset_and_save)
 from preprocessing.normalization_helpers import normalize_data_set
 from preprocessing.variance_helpers import remove_low_var_and_save
-
+from preprocessing.outlier_helpers import winsorize_data
 
 def get_arguments():
 	"""
@@ -29,6 +29,10 @@ def get_arguments():
 						help='the minimal threshold of a coefficient of variance to keep: mu/sigma')
 	parser.add_argument('--remove_low_variance', dest='remove_low_variance', action='store_true',
 						help="removes low variance elements using the cv_thresh from data and saves.")
+	parser.add_argument('--remove_outliers_percentile', dest='remove_outliers_percentile', action='store', default=0.00, type=float,
+						help='the nth percentile of outliers to remove')
+	parser.add_argument('--outlier_std_distance', dest='outlier_std_distance', action='store', default=0, type=int,
+						help='the nth standard deviation at which values are considered outliers.')
 	parser.add_argument('--outfile', dest='outfile', action='store', default='preprocessed.tsv',
 						help='the base name for the output files. Default is preprocessed.tsv')
 	parser.add_argument('--verbose', dest='verbose', action='store_true',
@@ -51,6 +55,8 @@ def main():
 	remove_low_variance = args.remove_low_variance
 	save_corr = args.save_corr
 	outfile = args.outfile
+	remove_outliers_percentile = args.remove_outliers_percentile
+	outlier_std_distance = args.outlier_std_distance
 	verbose = args.verbose
 
 
@@ -62,7 +68,11 @@ def main():
 		save_corr: {save_corr}
 		verbose: {verbose}
 		""")
-
+	if outlier_std_distance > 0:
+		if remove_outliers_percentile < 0.0000001:
+			print("Outlier percentile not set, setting outlier percentile winsorization to 0.05")
+			remove_outliers_percentile=0.05
+		input_file = winsorize_data(input_file, remove_outliers_percentile)
 	if normalize: 
 		input_file = normalize_data_set(input_file, has_indices)
 

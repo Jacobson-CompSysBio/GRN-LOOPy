@@ -13,9 +13,15 @@ def extract_outlier_samples(series: pd.Series, n_stds: int) -> pd.Series:
 	This function returns true if the values within excede n standard deviations
 	from the mean
 	"""
+	if(series.sum() < 0.00000001):
+		return_series=series.copy()
+		return_series[:] = False
+		return return_series
 	zscore = stats.zscore(series)
 	z = np.abs(zscore)
-	return z > n_stds
+	return_series = pd.Series(z > n_stds)
+	return_series.name = series.name
+	return return_series
 
 def create_outlier_sample_rows(raw_df: pd.DataFrame, n_stds: int) -> pd.DataFrame: 
 	"""
@@ -27,7 +33,8 @@ def create_outlier_sample_rows(raw_df: pd.DataFrame, n_stds: int) -> pd.DataFram
 		outlier_series = extract_outlier_samples(raw_df[column], n_stds)
 
 		outlier_list.append(outlier_series)
-
+	print(type(outlier_list))
+	print(len(outlier_list))
 	outlier_df = pd.concat(outlier_list, axis=1)
 	outlier_df.columns = raw_df.columns
 	return_series = outlier_df.apply(lambda x: any(x), axis=1)
@@ -77,14 +84,25 @@ def drop_rows_with_extreme_outliers(raw_df, n_sds, nth_percentile_for_drop):
 	return df_dropped_high_pct_outlier, outlier_df
 
 
-def winsorize_data(): 
+def winsorize_data(input_file, n_sds=6, limits=0.05, has_index_col: bool=False, sep: str = '\t', verbose: bool = False) -> str: 
 	"""
-	IF all data are to be winsorized, then we immediately winsorize them and return the base data
+	This function extracts the total number of outliers, finds the columns, and then winsorizes the column
+	ultimately squashing the data to the nth percentil. 
 	"""
-	for col in outlier_columns: 
-		raw_df[col] = stats.mstats.winsorize(raw_df[col], limits=0.05)
 
-	return raw_df
+	index_col = 0 if has_index_col else None
+	raw_data = pd.read_csv(input_file, sep=sep, index_col= index_col) 
+	print("Raw Data: ", raw_data.head())
+	rows_with_outliers, outlier_df = create_outlier_sample_rows(raw_data, n_sds)
+	outlier_columns = outlier_df.columns
+	print("outlier", outlier_df.shape)
+	for col in outlier_columns: 
+		raw_data[col] = stats.mstats.winsorize(raw_data[col], limits=0.05)
+	path, base_name = os.path.split(input_file)
+	output_file_name = f"{path}/outlier_removed_{base_name}" 
+	print("Saving to file: ", output_file_name)
+	raw_data.to_csv(output_file_name, sep=sep, index = has_index_col)
+	return output_file_name
 
 
 
