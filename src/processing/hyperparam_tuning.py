@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
-import numpy as np
 
 
 def hyperparameter_tune(
@@ -195,7 +194,7 @@ def hyperparameter_tune(
         print(f'score: {eval_matrix[indices]}')
 
     best_idx = np.argmin(list(map(lambda x: np.mean(x), score_list)))
-    r2_variance = np.var(score_list)
+    r2_variance = list(map(lambda x: np.var(score_list[x]), score_list.keys())) # np.var(score_list)
     
     return {
         "best_model_params": best_model_params, 

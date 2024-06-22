@@ -14,34 +14,19 @@ class AbstractModel:
     irf_r2_list = None
     model = None
 
-    def __init__(self, model_name: str, objective: str, **kwargs):
+    def __init__(self, model_name: str, objective: str, device:str, **kwargs):
         self.model_name = model_name
         self.objective = objective
-        self.device = kwargs['device']
+        self.device = device #kwargs['device']
         self.define_model(**kwargs)
 
     def define_model(self, **kwargs):
         rf_model = RandomForestClassifierWithWeights if self.objective == 'classification' else RandomForestRegressorWithWeights
         self.model = rf_model(
-            n_estimators=kwargs['n_estimators'],
             criterion='mse',
-            # max_depth=kwargs['max_depth'],
-            # min_samples_split=kwargs['min_samples_split'],
-            # min_samples_leaf=kwargs['min_samples_leaf'],
-            min_weight_fraction_leaf=0.0,
-            # max_features=kwargs['max_features'],
-            max_leaf_nodes=None,
-            min_impurity_decrease=0.0,
-            min_impurity_split=None,
-            bootstrap=True,
             oob_score=True,
-            n_jobs=kwargs['n_jobs'],
-            #random_state=None,
-            verbose=0,
-            #warm_start=False,
-            #ccp_alpha=0.0,
-            #max_samples=None
-        )
+            **kwargs        
+         )
 
     def run_rf_model(self, train, test, x_cols, y_col, n_iterations, eval_set=False, device='cpu', model_name = "lgbm", calc_permutation_importance = False, calc_permutation_score=False, n_permutations=1000, verbose=False):
         x_train = train[x_cols]
@@ -58,10 +43,6 @@ class AbstractModel:
         weight = feature_weights / np.sum(feature_weights)
         irf_r2_list = []
         predicted_y_hat = None
-        print("XTRAIN", x_train.head())
-        print("ytrain", y_train.head())
-        print(x_train.isna().sum().sum())
-        print(y_train.isna().sum())
         for i in range(n_iterations):
             self.model.fit(x_train, y_train, feature_weight = weight)
             feature_imps = self.model.feature_importances_

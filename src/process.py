@@ -129,19 +129,23 @@ def get_model_hyper(dataset_length):
 		}
 	if model_name == 'irf': 
 		model_hyper = {
-			'n_estimators': [ 100, 500],
-			'max_depth': [ np.sqrt(dataset_length), dataset_length ],
-			'min_samples_leaf': [ 1, 5, np.sqrt(dataset_length)],
-			'bagging_fraction': [0.25, 0.5, 0.75]
+			#'n_estimators': [ 100, 500],
+			#'max_depth': [ np.sqrt(dataset_length), dataset_length, 500 ],
+			#'min_samples_leaf': [ 1, 5, np.sqrt(dataset_length)],
+			#'bagging_fraction': [0.25, 0.5, 0.75]
+ 'n_estimators': [25, 100],
+    'max_features': ['sqrt', 'log2'],
+    'max_depth': [3, 10],
+    'min_samples_split': [2, 5],
+    'min_samples_leaf': [1, 4] 
  		}
 		model_fixed = {
+                        'bootstrap': True,
 			'model_name': model_name,
 			'objective': objective,
 			'device': device,
 			'n_jobs': 4,
-			'n_iterations': n_irf_iter,
-			'bagging_freq': 1,
-			'verbose': -1,
+                        'random_state': 42,
 		}
 	return model_hyper, model_fixed
 
@@ -180,7 +184,7 @@ def run_mpi_model(feature_name):
 				data = train_df,
 				y_feature= y_col,
 				k_folds= k_folds,
-				train_size=0.85,
+				train_size=0.7,
 				device=device,
 				verbose= False,
 			)
@@ -211,8 +215,9 @@ def run_mpi_model(feature_name):
 		output['gpu_device_id']= gpu_device_id
 		output['n_jobs']= n_jobs
 		output['feature'] = feature_name
-		
-		
+		for key, value in param_list['best_model_params'].items():
+			output[key] = value
+		print("FEATURE: ", feature, ":", param_list)		
 
 		return output
 	except Exception as ex: 
