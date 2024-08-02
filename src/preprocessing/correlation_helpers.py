@@ -14,7 +14,7 @@ def correlate_data(df: pd.DataFrame, has_index_col: bool) ->  pd.DataFrame:
 	columns_for_correlation = df.columns[1:] if has_index_col else df.columns
 
 	data_for_correlation = df[ columns_for_correlation ]
-	reshaped = data_for_correlation.values.reshape(list(reversed(data_for_correlation.shape)))
+	reshaped = data_for_correlation.T.values #.reshape(list(reversed(data_for_correlation.shape)))
 	total_corrmat = np.corrcoef(reshaped)
 	total_corrmat = pd.DataFrame(total_corrmat)
 	total_corrmat.columns = columns_for_correlation

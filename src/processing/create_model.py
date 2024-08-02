@@ -30,7 +30,7 @@ class AbstractModel:
             # min_samples_split=kwargs['min_samples_split'],
             # min_samples_leaf=kwargs['min_samples_leaf'],
             min_weight_fraction_leaf=0.0,
-            # max_features=kwargs['max_features'],
+            max_features='sqrt',#kwargs['max_features'], TODO: Matt & Alice explore parameterization of this
             max_leaf_nodes=None,
             min_impurity_decrease=0.0,
             min_impurity_split=None,
@@ -60,8 +60,8 @@ class AbstractModel:
             if verbose: 
                 print(f"Iteration time @", i, ":  ", time.time() - start) 
         stop = time.time()
-        print("Total time: ", stop- start, flush=True)
-        
+        print(y_col, "Total time: ", stop- start, flush=True)
+        print("Model OOB R2: ", self.model.oob_score_, flush=True)
         feature_mask = np.arange(len(x_cols)) if model_name == 'svr' else np.argwhere(self.model.feature_importances_ > 0)
         feature_importances = None if model_name == 'svr' else "|".join(
             map(lambda x: f"{x}", np.array(self.model.feature_importances_)[feature_mask].reshape(-1)))

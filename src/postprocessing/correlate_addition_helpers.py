@@ -49,6 +49,8 @@ def copy_non_rep_to_representative_df(network_edgelist_df: pd.DataFrame, correla
 def add_correlates_back_to_df(network_edgelist_df: pd.DataFrame, correlated_data_file_path: str):
 	# network_edgelist_df = pd.read_csv(network_file_path, sep='\t', header=None, index_col=None)
 	correlated_data_df = pd.read_csv(correlated_data_file_path, sep='\t')
+	if correlated_data_df.shape[0] == 0: 
+		return(network_edgelist_df)
 	# # Get the unique representatives
 	# representative_list = correlated_data_df['representative'].unique()
 	# get the correlates and then concat them to original network
