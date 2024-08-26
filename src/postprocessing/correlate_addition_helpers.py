@@ -45,10 +45,23 @@ def copy_non_rep_to_representative_df(network_edgelist_df: pd.DataFrame, correla
 	# output_df = pd.concat(non_rep_edgelist_list).reset_index(drop=True)
 	return output_df.sort_values(by='weight', ascending=False).reset_index(drop=True)
 
+def check_representatives_in_edgelist(network_edgelist: pd.DataFrame, repmap: pd.DataFrame):
+	from_col = network_edgelist.columns[0]
+	to_col = network_edgelist.columns[1]
+	
+	representatives = repmap['representative'].unique()
+	in_from_mask = network_edgelist[from_col].isin(representatives)
+	in_to_mask = network_edgelist[to_col].isin(representatives)
+
+	masked= repmap[ in_to_mask | in_from_mask ] 
+	print(masked)
+	return masked
+
 
 def add_correlates_back_to_df(network_edgelist_df: pd.DataFrame, correlated_data_file_path: str):
 	# network_edgelist_df = pd.read_csv(network_file_path, sep='\t', header=None, index_col=None)
 	correlated_data_df = pd.read_csv(correlated_data_file_path, sep='\t')
+	correlated_data_df = check_representatives_in_edgelist(network_edgelist_df, correlated_data_df)
 	if correlated_data_df.shape[0] == 0: 
 		return(network_edgelist_df)
 	# # Get the unique representatives
@@ -56,6 +69,7 @@ def add_correlates_back_to_df(network_edgelist_df: pd.DataFrame, correlated_data
 	# get the correlates and then concat them to original network
 	print("Correlated_data df") 
 	print(correlated_data_df)
+	
 	non_rep_concatenation = copy_non_rep_to_representative_df(network_edgelist_df, correlated_data_df)#, representative_list)
 	total_network = pd.concat([network_edgelist_df, non_rep_concatenation]).reset_index(drop=True)
 	print("TOTAL NETWORK") 
