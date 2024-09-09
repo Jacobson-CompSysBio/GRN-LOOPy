@@ -52,8 +52,14 @@ def check_representatives_in_edgelist(network_edgelist: pd.DataFrame, repmap: pd
 	representatives = repmap['representative'].unique()
 	in_from_mask = network_edgelist[from_col].isin(representatives)
 	in_to_mask = network_edgelist[to_col].isin(representatives)
-
-	masked= repmap[ in_to_mask | in_from_mask ] 
+	
+	in_nodes = network_edgelist[from_col][in_from_mask]
+	out_nodes = network_edgelist[to_col][in_to_mask]
+	
+	unique_reps = pd.concat([in_nodes, out_nodes]).unique()
+	repmap_mask = repmap['representative'].isin(unique_reps)
+	
+	masked= repmap[repmap_mask]
 	print(masked)
 	return masked
 
