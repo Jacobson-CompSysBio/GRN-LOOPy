@@ -57,6 +57,7 @@ def get_arguments():
 						help="The frequency to undergo bagging. Default is 1, for every iteration.")
 	parser.add_argument("--n_jobs", dest="njobs", default=24, type=int, help='the total number of jobs for each run')
 	parser.add_argument("--n_irf_iterations", dest="n_irf_iter", default=5, type=int, help="the total number of iterations for each iRF model")
+	parser.add_argument("--mpi", dest="mpi", action='store_true', help="a flag to determine whether or not to distribute across nodes with MPI")
 	return parser.parse_args()
 
 train_df = None
@@ -185,6 +186,9 @@ def main():
 	verbose = args.verbose
 	outfile = args.outfile
 	n_irf_iter = args.n_irf_iter
+	mpi = args.mpi
+
+
 	print("Reading Data In", flush=True)
 	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
 
@@ -195,12 +199,17 @@ def main():
 	test_df = test # no longer using test. grabbing oob r2
 
 	print("Distributing Data", flush=True)
-	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
-		if executor is not None:
-			print(" I AM THE EXECUTOR!" )
-			collected_output = list(executor.map(run_mpi_model, features))
+
+	if mpi: 
+		with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
+			if executor is not None:
+				collected_output = list(executor.map(run_mpi_model, features))
+				pd.DataFrame(collected_output).to_csv(outfile, sep='\t')
+				# print(collected_output)
+	else: 
+		with mp.Pool() as pool:
+			collected_output = pool.map(run_model, features)
 			pd.DataFrame(collected_output).to_csv(outfile, sep='\t')
-			# print(collected_output)
 
 ## TODO: We need to factor in the kfold crass validation. Additionally, for data sets too small, a functionality should be implemented for folks to forego the validation step in the train/test split (for astoundingly small rna seq data sets)
 
