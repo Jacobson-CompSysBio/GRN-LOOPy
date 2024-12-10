@@ -6,6 +6,7 @@ from preprocessing.network_helpers import (
 	remove_representatives_from_main_dataset_and_save)
 from preprocessing.variance_helpers import remove_low_var_and_save
 
+
 def get_arguments():
 	"""
 	Extracts command line arguments. 
@@ -14,14 +15,14 @@ def get_arguments():
 	parser.add_argument('--infile', type=str, dest='infile', required=True,
 						help='the base input file dataframe')
 	parser.add_argument('--has_indices', dest='has_indices', action='store_true',
-					   help='signifies that dataset has indices')
-	parser.add_argument('--corr_thresh', dest='corr_thresh', action='store', default=0.95,
-						help='the threshold at which to cut off values. Default 0.95')
+					   help='signifies that dataset does not have indices')
+	parser.add_argument('--corr_thresh', dest='corr_thresh', action='store',  default=0.95,
+						type=float, help='the threshold at which to cut off values. Default 0.95')
 	parser.add_argument('--save_corr', dest='save_corr', action='store_true',
 						help='saves the correlation data to file')
 	parser.add_argument('--remove_high_corr', dest='remove_high_corr', action='store_true',
 						help='removes highly correlated values from the dataset.')
-	parser.add_argument('--cv_thresh', dest='cv_thresh', action='store', default=0.05,
+	parser.add_argument('--cv_thresh', dest='cv_thresh', action='store', default=0.01, type=float,
 						help='the minimal threshold of a coefficient of variance to keep: mu/sigma')
 	parser.add_argument('--remove_low_variance', dest='remove_low_variance', action='store_true',
 						help="removes low variance elements using the cv_thresh from data and saves.")
@@ -46,6 +47,7 @@ def main():
 	cv_thresh = args.cv_thresh
 	remove_low_variance = args.remove_low_variance
 	save_corr = args.save_corr
+	outfile = args.outfile
 	verbose = args.verbose
 
 
@@ -58,23 +60,21 @@ def main():
 		verbose: {verbose}
 		""")
 
-	if verbose: 
-		print("Removing NO Variance Values")
-	
-
 	if remove_low_variance:
+		if verbose: 
+			print("removing low variance thresh: ", cv_thresh)
 		# save low variance, then use that low variance file as base input.
 		input_file = remove_low_var_and_save(input_file, cv_thresh, has_indices)
 
 
-	if verbose: 
-		print("Creating Correlation List.")
 
 	if remove_high_corr:
+		if verbose: 
+			print("creating correlation list", flush=True)
 		stacked_corr_data = create_correlation_list(input_file, has_indices, corr_thresh, save_corr)
 
 		if verbose: 
-			print("Extracting Representatives.") 
+			print("Extracting Representatives.", flush=True) 
 
 		representatives, non_representatives = extract_representatives_and_save_to_files(
 			df = stacked_corr_data,
@@ -82,10 +82,10 @@ def main():
 		) 
 
 		if verbose: 
-			print("Saving Dataset with Nonrepresentatives Removed")
+			print("Saving Dataset with Nonrepresentatives Removed", flush=True)
 
 		# TODO: Change the name! we're removing nonreps
-		remove_representatives_from_main_dataset_and_save(input_file, non_representatives) 
+		remove_representatives_from_main_dataset_and_save(input_file, non_representatives, has_indices=has_indices, outfile=outfile) 
 
 if __name__ == "__main__":
 	main()

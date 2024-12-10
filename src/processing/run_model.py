@@ -2,6 +2,7 @@ import os
 import random
 import time
 from sklearn import metrics
+
 def run_correlation_modeling(model, data, x_cols, y_col, model_type): 
     correlation_scores = np.zeros(len(x_cols))
     start = time.time()

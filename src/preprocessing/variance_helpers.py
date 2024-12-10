@@ -33,11 +33,11 @@ def remove_low_variance_features(raw_df: pd.DataFrame, variance_thresh: float, p
 	if len(low_variance_dataframe.columns) == 0: 
 		raise RuntimeError("remove_low_variance removed all features from dataframe.")
 
-	if print_meta:
-		low_var_cols = raw_df.columns[ ~threshold_mask ]
-		with open(f'{path}/meta.txt', 'a') as f:
-			f.write(f'num_low_var_removed_cols\t{len(low_var_cols)}\n')
-			f.write(f"low_var_removed_cols\t{low_var_cols}\n\n")
+	#if print_meta:
+	#	low_var_cols = raw_df.columns[ ~threshold_mask ]
+	#	with open(f'{path}/meta.txt', 'a') as f:
+	#		f.write(f'num_low_var_removed_cols\t{len(low_var_cols)}\n')
+	#		f.write(f"low_var_removed_cols\t{low_var_cols}\n\n")
 
 	return low_variance_dataframe
 

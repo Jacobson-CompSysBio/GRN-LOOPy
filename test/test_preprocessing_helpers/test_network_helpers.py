@@ -1,5 +1,4 @@
 import networkx as nx
-import igraph
 import numpy as np 
 import pandas as pd
 import pytest
