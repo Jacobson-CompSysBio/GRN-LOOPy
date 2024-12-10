@@ -2,6 +2,7 @@ import pandas as pd
 import networkx as nx
 import random
 from utils import file_helpers
+import numpy as np
 
 ### NETWORK Functions: 
 def convert_df_to_network(df):
@@ -25,11 +26,13 @@ def create_representative_set(network):
 	representatives = []
 	element_map = {}
 	for subgraph in connected_components:
-		representative = list(subgraph)[0]
+		subgraph_list = list(subgraph)
+		subgraph_list.sort()
+		representative = subgraph_list[0]
 		representatives.append(representative)
 
 		# Get the remainder of elements within S1: 
-		for element in subgraph:
+		for element in subgraph_list:
 			if element == representative: 
 				continue
 
@@ -60,7 +63,7 @@ def extract_representatives_and_save_to_files(df=None, df_filepath=None, origina
 		raise Exception("No dataframe or filepath included") 
 	
 	df = df if df is not None else file_helpers.read_dataframe(df_filepath, sep=delim)
-
+	np.random.seed(42)
 	
 	network = convert_df_to_network(df)
 	x = create_representative_set(network) 
@@ -95,7 +98,7 @@ def remove_representatives_from_main_dataset_and_save(raw_data_file: str, non_re
 	outfile_name = outfile if outfile is not None else  f"{base_name}_no_correlated_data.tsv"
 	print("Saving data to ", outfile_name)	
 	filtered_df.to_csv(outfile_name, sep='\t', index=False)
-
+	print(filtered_df) 
 	return filtered_df
 
 
