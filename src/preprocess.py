@@ -6,6 +6,7 @@ from preprocessing.network_helpers import (
 	remove_representatives_from_main_dataset_and_save)
 from preprocessing.variance_helpers import remove_low_var_and_save
 
+
 def get_arguments():
 	"""
 	Extracts command line arguments. 

@@ -61,15 +61,19 @@ def main():
 	if verbose:
 		print(df.head(), flush=True)
 	# create network edgelist
+	print("R2 thresholds", r2_thresholds)
 	for r2_threshold in r2_thresholds: 
-		print("Thresholding Models below r2 of: ", r2_threshold)
+		if verbose: 
+			print("Thresholding Models below r2 of: ", r2_threshold)
+			print(df.head())
+			print(type(r2_threshold)) 
 		df = df[ df['r2'] >= r2_threshold ]
-		print(df)
+		#print(df)
 		if verbose:
 			print("Creating edgelist", flush=True)
 		network_edgelist = create_edgelist( df [ ~df.feature_imps.isna() ], weigh_by_acc)
 
-		del(df)
+		#del(df)
 	# sort the edgelist 
 		if verbose: 
 			print("Sorting Edgelist", flush=True)

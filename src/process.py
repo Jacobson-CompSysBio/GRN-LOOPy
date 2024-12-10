@@ -10,7 +10,7 @@ from processing.create_model import AbstractModel
 from processing.data_helpers import get_train_test_split
 import argparse
 import numpy as np
-
+import multiprocessing as mp
 
 def get_arguments():
 	"""
