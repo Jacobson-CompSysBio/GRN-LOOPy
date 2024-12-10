@@ -25,7 +25,7 @@ class AbstractModel:
         #rf_model = RandomForestRegressorWithWeights if self.objective == 'regression' else RandomForestClassifierWithWeights 
         self.model = RandomForestRegressorWithWeights(
             n_estimators=kwargs['n_estimators'],
-            criterion='mse',
+            criterion='squared_error',
             max_depth=kwargs['max_depth'],
             # min_samples_split=kwargs['min_samples_split'],
             # min_samples_leaf=kwargs['min_samples_leaf'],
@@ -33,7 +33,6 @@ class AbstractModel:
             max_features='sqrt',#kwargs['max_features'], TODO: Matt & Alice explore parameterization of this
             max_leaf_nodes=None,
             min_impurity_decrease=0.0,
-            min_impurity_split=None,
             bootstrap=True,
             oob_score=True,
             n_jobs=kwargs['n_jobs'],
