@@ -1,6 +1,4 @@
 #!/lustre/orion/world-shared/syb111/frontier_hack/hp_gin_gen_env/bin/python
-from mpi4py import MPI
-from mpi4py.futures import MPICommExecutor
 import pandas as pd
 import os
 import sys
@@ -11,7 +9,7 @@ from processing.create_model import AbstractModel
 from processing.data_helpers import get_train_test_split
 from processing.hyperparam_tuning import hyperparameter_tune
 import argparse
-
+import multiprocessing as mp
 
 def get_arguments():
 	"""
@@ -28,6 +26,8 @@ def get_arguments():
 						help='specifies the delimiter for the input file.\n Default "\\t"')
 	parser.add_argument('--device', dest='device', action='store', default="cpu",
 						help='the device type you wish to use for training')
+	parser.add_argument('--mpi', dest='mpi', action='store_true', default=False,
+						help='the flag for determining whether or not MPI is used')
 	parser.add_argument('--outfile', dest='outfile', action='store', default='processed_data.tsv',
 						help='the base name for the output files. Default is processed_data.tsv')
 	parser.add_argument("--boosting_type", dest="boosting_type", default  = 'gbdt', 
@@ -38,7 +38,7 @@ def get_arguments():
 						help="Objective for model: 'regression', 'mape', etc.")						
 	parser.add_argument("--learning_rate", dest="learning_rate", default  = 0.1, 
 						help="Boosting learning rate")						
-	parser.add_argument("--n_estimators", dest="n_estimators", default  = 100,
+	parser.add_argument("--n_estimators", dest="n_estimators", default  = 100, type=int,
 						help="The total number of leaves allowed in each tree. Recommended set large and fine tune with early stopping on validation")						
 	parser.add_argument("--num_leaves", dest="num_leaves", default  = 31,
 						help="max number of leaves in one tree")						
@@ -58,6 +58,8 @@ def get_arguments():
 						help="The frequency to undergo bagging. Default is 1, for every iteration.")
 	parser.add_argument("--tune_hyper_parameters", dest="tune_hyper_parameters", action="store_true", 
 						help="engage in hyperparameter tuning for each feature.")
+	parser.add_argument("--n_processes", dest="n_processes", action="store", default=8, type=int,
+						help="the total number of processes to each model")
 	return parser.parse_args()
 
 train_df = None
@@ -78,8 +80,13 @@ n_permutations = None
 bagging_fraction=None
 bagging_freq=None
 tune_hyper_parameters = None
+n_processes = None 
+mpi = None
 
 def get_model_hyper(): 
+	if mpi: 
+		from mpi4py import MPI
+
 	model_hyper = None
 	model_fixed = None
 	if model_name == 'lgbm': 
@@ -115,27 +122,39 @@ def get_model_hyper():
 	return model_hyper, model_fixed
 
 def run_mpi_model(feature_name):
+	if mpi: 
+		from mpi4py import MPI
+
+	print("FEATURE NAME", feature_name)
+	print("traindf ", train_df)
 	x_cols = train_df.columns[train_df.columns != feature_name]
 	y_col = feature_name
 
+	print(x_cols)
+	print(y_col)
+
 
     #TODO:  run w/ salloc/srun to limit the gpus that the process sees. 
-	rank = MPI.COMM_WORLD.Get_rank()
-	node_id = os.environ['SLURM_NODEID']
+	rank = "no_mpi" if mpi is None else MPI.COMM_WORLD.Get_rank()
+	node_id = "no_mpi" if mpi is None else os.environ['SLURM_NODEID']
 	#gpus_per_device = 8
 	gpu_device_id = 0 #rank % gpus_per_device if device == 'gpu' else -1 
 	n_jobs = -1
 
 	#TODO: if model does not use GPUs, ensure to warn user and switch 
 	# back to CPU specifications. 
-	param_list = None
-	param_list = {
+	param_list = [{
 		"learning_rate": learning_rate,
 		"n_estimators": n_estimators,
 		"max_depth": max_depth,
 		"bagging_fraction": bagging_fraction,
 		"bagging_freq": bagging_freq,
-	}
+	}]
+
+	if model_name == 'irf': 
+		param_list[0]['n_jobs'] = n_jobs
+		param_list[0]['n_iterations'] = 5
+
 	if tune_hyper_parameters: 
 		print("hyperparam tuning")
 		model_hyper, model_fixed = get_model_hyper()
@@ -204,13 +223,15 @@ def main():
 	global bagging_freq
 	global tune_hyper_parameters
 	global verbose
-
+	global mpi
+	global n_processes
 
 	df_filepath = args.infile
 	has_indices = args.has_indices
 	header_idx = int(args.header_idx)
 	delim = args.delim 
 
+	mpi = args.mpi
 	device = args.device
 	boosting_type = args.boosting_type
 	objective = args.objective
@@ -226,27 +247,44 @@ def main():
 	bagging_fraction = args.bagging_fraction
 	bagging_freq = args.bagging_freq
 	tune_hyper_parameters = args.tune_hyper_parameters
-
+	n_processes = args.n_processes
 	verbose = args.verbose
 	outfile = args.outfile
 
+
+
+	if mpi: 
+		from mpi4py.futures import MPICommExecutor
+		from mpi4py import MPI
+
+
+
+
+
 	print("Reading Data In")
 	df = read_dataframe(df_filepath, sep=delim, header=header_idx)
-
+	print(df.columns)
 	print("Splitting Data")
 	features = df.columns
 	train, test = get_train_test_split(df)
 	train_df = train
 	test_df = test
+	print(train_df)
+	print(test_df)
 
 	print("Distributing Data")
-	with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
-		if executor is not None:
-			collected_output = list(executor.map(run_mpi_model, features))
-			pd.DataFrame(collected_output).to_csv(outfile)
-			# print(collected_output)
+	if mpi: 
+		with MPICommExecutor(MPI.COMM_WORLD, root=0) as executor:
+			if executor is not None:
+				collected_output = list(executor.map(run_mpi_model, features))
+				pd.DataFrame(collected_output).to_csv(outfile, sep=delim)
+				# print(collected_output)
+	else: 
+		with mp.Pool(processes=n_processes) as pool:
+        # Map tasks to workers
+			collected_output = list(pool.map(run_mpi_model, features))
+    
 
 ## TODO: We need to factor in the kfold crass validation. Additionally, for data sets too small, a functionality should be implemented for folks to forego the validation step in the train/test split (for astoundingly small rna seq data sets)
-
 if __name__ == '__main__':
 	main()

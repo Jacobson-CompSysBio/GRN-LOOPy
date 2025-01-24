@@ -4,6 +4,7 @@ from sklearn.model_selection import permutation_test_score
 from sklearn import metrics
 import numpy as np
 import time
+import lightgbm as lgb
 from lightgbm import log_evaluation
 import numpy as np
 
@@ -36,7 +37,7 @@ class AbstractModel:
     def define_model(self, **kwargs):
 
         if self.model_name == 'lgbm': 
-            self.model = create_lgb_model(
+            self.model = self.create_lgb_model(
                 boosting_type = 'gbdt',
                 objective = self.objective,
                 **kwargs
@@ -46,7 +47,7 @@ class AbstractModel:
             ## bagging_frac. 
             ##  bagging_freq=1,
             ##  bagging_fraction=0.6, 
-            self.model = create_lgb_model(
+            self.model = self.create_lgb_model(
                 boosting_type = 'rf',
                 objective = self.objective,
                 **kwargs
@@ -56,7 +57,7 @@ class AbstractModel:
             ## bagging_frac. 
             ##  bagging_freq=1,
             ##  bagging_fraction=0.6, 
-            self.model = create_lgb_model(
+            self.model = self.create_lgb_model(
                 boosting_type = 'dart',
                 objective = self.objective,
                 **kwargs
@@ -64,7 +65,7 @@ class AbstractModel:
         if self.model_name == 'irf': 
             self.model = RandomForestRegressorWithWeights(
                 n_estimators=kwargs['n_estimators'],
-                max_depth=kwargs['max_depth'],
+                # max_depth=kwargs['max_depth'],
                 n_jobs=kwargs['n_jobs'],
                 criterion='squared_error',
                 min_weight_fraction_leaf=0.0,
@@ -75,6 +76,8 @@ class AbstractModel:
                 oob_score=True,
                 verbose=0
             )
+            self.n_iterations = kwargs['n_iterations']
+
         if self.model_name == 'svr':
             self.model = SVR()
         if self.model_name == 'pearson':
@@ -83,6 +86,41 @@ class AbstractModel:
             self.model = stats.spearmanr
         if self.model_name == 'xicor': 
             self.model = xicor.Xi
+
+
+
+    def create_lgb_model(
+        self, 
+        boosting_type = 'gbdt', # 'gbdt'
+        objective = 'regression', # 'regression', 'mape'
+        learning_rate = 0.1, # boosting learning rate
+        n_estimators = 100, # set large and fine tune with early stopping on validation
+        num_leaves = 31, # max number of leaves in one tree
+        max_depth = -1, # constrain max tree depth to prevent overfitting, 
+        random_state= 42,
+        device = "cpu",
+        gpu_device_id = -1,
+        verbose= 1,
+        **kwargs):  # -1 = silent, 0 = warn, 1 = info
+        """
+        TODO: specifically for lgbm, but this function ought to return any type of 
+        tree based model that we can run embarassingly to get feature importances
+        """
+        if device == "gpu": 
+            kwargs['gpu_device_id'] = gpu_device_id
+        model = lgb.LGBMRegressor(
+            boosting_type= boosting_type,
+            objective= objective,
+            learning_rate= learning_rate,
+            n_estimators= n_estimators,
+            num_leaves= num_leaves,
+            max_depth= max_depth,
+            verbose= verbose,
+            random_state= random_state,
+            device=device, 
+            **kwargs
+        )
+        return model
 
     def run_correlation_modeling(self, data, x_cols, y_col): 
         correlation_scores = np.zeros(len(x_cols))
@@ -101,26 +139,24 @@ class AbstractModel:
             "feature_cors": "|".join(map(lambda x: f"{x}", correlation_scores))
         }
 
-    def fit_lgb_rf_model(): 
+    def fit_lgb_rf_model(self, x_train, y_train, x_test, y_test, eval_set=False): 
         if eval_set:
             callbacks = [log_evaluation(-1)]
             self.model.fit(x_train, y_train, eval_set=(x_test, y_test), callbacks=callbacks )
         else:
             self.model.fit(x_train, y_train)
 
-    def fit_irf_model(): 
+    def fit_irf_model(self, x_train, y_train): 
         feature_weights = np.ones(x_train.shape[1])
         weight = feature_weights / np.sum(feature_weights)
-        for i in range(n_iterations):
+        for i in range(self.n_iterations):
             self.model.fit(x_train, y_train, feature_weight = weight)
             feature_imps = self.model.feature_importances_
             weight = feature_imps / sum(feature_imps)
-            if verbose: 
-                print(f"Iteration time @", i, ":  ", time.time() - start) 
 
     def calculate_pumutation_test(): 
         permutation_test_start = None if not calc_permutation_score else time.time()
-        perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
+        self.perm_test_results_p_val = None if not calc_permutation_score else permutation_test_score(
             self.model, x_train, y_train, n_permutations=n_permutations)[2] # 3rd value is the p_value
         permutation_test__stop = None if not calc_permutation_score else time.time()
 
@@ -139,10 +175,11 @@ class AbstractModel:
 
 
         start = time.time()
-            if self.model_name in ['lgbm', 'rf', 'dart']: 
-                run_lgb_rf_model(x_train, y_train, x_test, y_test)
-            elif self.model_name == 'irf':
-                fit_irf_model
+        if self.model_name in ['lgbm', 'rf', 'dart']: 
+            self.fit_lgb_rf_model(x_train, y_train, x_test, y_test, eval_set)
+        elif self.model_name == 'irf':
+            print(x_train, y_train)
+            self.fit_irf_model(x_train, y_train)
         stop = time.time()
 
 
@@ -152,18 +189,23 @@ class AbstractModel:
         feature_names = np.array(x_cols)[feature_mask].reshape(-1)
         
         self.train_time = stop - start
-        self.r2 =  self.model.oob_score_ if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test ),
+        self.r2 =  self.model.oob_score_ if test.shape[1] == 0 else metrics.r2_score( self.model.predict(x_test), y_test )
         self.feature_imps = feature_importances
         self.features = feature_names
-        self.n_permutations = None if n_permutations
+        self.n_permutations = n_permutations 
 
-        self.p_value = perm_test_results_p_val
-        self.permutation_importance = permutation_importances
+        print("y_col", y_col)
+        # print(self.model.oob_score_ )
+        print( metrics.r2_score( self.model.predict(x_test), y_test ) )
+        # print(test.shape[1] )
+        # print(self.r2 )
+        # self.p_value = perm_test_results_p_val
+        # self.permutation_importance = permutation_importances
 
         self.eval_set = eval_set
-        best_score, best_iteration = self.evaluate()
-        self.best_iteration = best_iteration
-        self.best_score = best_score
+        # best_score, best_iteration = self.evaluate()
+        # self.best_iteration = best_iteration
+        # self.best_score = best_score
         
         
         return {
@@ -186,7 +228,6 @@ class AbstractModel:
                 test = test,
                 x_cols = x_cols,
                 y_col = y_col,
-                n_iterations = n_iterations,
                 eval_set = eval_set,
                 device = self.device,
                 model_name = self.model_name,
